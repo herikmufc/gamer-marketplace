@@ -22,6 +22,7 @@ export default function CreateProductScreen({ navigation }) {
     description: '',
     category: 'game',
     console_type: '',
+    price: '',
     is_working: true,
     is_complete: false,
     has_box: false,
@@ -30,7 +31,7 @@ export default function CreateProductScreen({ navigation }) {
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
-  const [priceAnalysis, setPriceAnalysis] = useState(null);
+  const [aiSuggestion, setAiSuggestion] = useState(null);
 
   const categories = [
     { id: 'console', label: 'Console', icon: '🕹️' },
@@ -51,14 +52,14 @@ export default function CreateProductScreen({ navigation }) {
     }
   };
 
-  const analyzeProduct = async () => {
+  const suggestPriceWithAI = async () => {
     if (images.length === 0) {
-      Alert.alert('Erro', 'Adicione pelo menos uma foto do produto');
+      Alert.alert('Erro', 'Adicione pelo menos uma foto para a IA analisar');
       return;
     }
 
     if (!formData.title || !formData.console_type) {
-      Alert.alert('Erro', 'Preencha título e tipo de console');
+      Alert.alert('Erro', 'Preencha título e tipo de console primeiro');
       return;
     }
 
@@ -83,15 +84,21 @@ export default function CreateProductScreen({ navigation }) {
       });
 
       const analysis = await products.analyze(formDataObj);
-      setPriceAnalysis(analysis);
+      setAiSuggestion(analysis);
+
+      // Preencher preço automaticamente com a sugestão da IA
+      setFormData(prev => ({
+        ...prev,
+        price: analysis.price_suggestion.ideal.toFixed(2)
+      }));
 
       Alert.alert(
-        'Análise Completa! 🎉',
-        `Preço sugerido: R$ ${analysis.price_suggestion.ideal.toFixed(2)}\n\nCondição: ${analysis.condition_score.toFixed(0)}/100\nRaridade: ${analysis.rarity_score.toFixed(0)}/100`,
+        '💡 Sugestão da IA',
+        `Preço sugerido: R$ ${analysis.price_suggestion.ideal.toFixed(2)}\n\nFaixa: R$ ${analysis.price_suggestion.min.toFixed(2)} - R$ ${analysis.price_suggestion.max.toFixed(2)}\n\nCondição: ${analysis.condition_score.toFixed(0)}/100\nRaridade: ${analysis.rarity_score.toFixed(0)}/100\n\nVocê pode ajustar o preço manualmente se preferir.`,
         [{ text: 'OK' }]
       );
     } catch (error) {
-      Alert.alert('Erro', 'Falha ao analisar produto');
+      Alert.alert('Erro', 'Falha ao analisar produto. Você pode definir o preço manualmente.');
       console.error(error);
     } finally {
       setAnalyzing(false);
@@ -99,13 +106,19 @@ export default function CreateProductScreen({ navigation }) {
   };
 
   const createProduct = async () => {
-    if (!priceAnalysis) {
-      Alert.alert('Atenção', 'Analise o produto primeiro com a IA');
+    // Validações
+    if (!formData.title || !formData.description || !formData.console_type) {
+      Alert.alert('Erro', 'Preencha todos os campos obrigatórios');
       return;
     }
 
-    if (!formData.description) {
-      Alert.alert('Erro', 'Adicione uma descrição do produto');
+    if (!formData.price || parseFloat(formData.price) <= 0) {
+      Alert.alert('Erro', 'Defina um preço válido para o produto');
+      return;
+    }
+
+    if (images.length === 0) {
+      Alert.alert('Erro', 'Adicione pelo menos uma foto do produto');
       return;
     }
 
@@ -121,12 +134,16 @@ export default function CreateProductScreen({ navigation }) {
       formDataObj.append('is_complete', formData.is_complete);
       formDataObj.append('has_box', formData.has_box);
       formDataObj.append('has_manual', formData.has_manual);
-      formDataObj.append('final_price', priceAnalysis.price_suggestion.ideal);
-      formDataObj.append('condition_score', priceAnalysis.condition_score);
-      formDataObj.append('rarity_score', priceAnalysis.rarity_score);
-      formDataObj.append('price_min', priceAnalysis.price_suggestion.min);
-      formDataObj.append('price_ideal', priceAnalysis.price_suggestion.ideal);
-      formDataObj.append('price_max', priceAnalysis.price_suggestion.max);
+      formDataObj.append('final_price', parseFloat(formData.price));
+
+      // Se a IA foi usada, enviar dados adicionais
+      if (aiSuggestion) {
+        formDataObj.append('condition_score', aiSuggestion.condition_score);
+        formDataObj.append('rarity_score', aiSuggestion.rarity_score);
+        formDataObj.append('price_min', aiSuggestion.price_suggestion.min);
+        formDataObj.append('price_ideal', aiSuggestion.price_suggestion.ideal);
+        formDataObj.append('price_max', aiSuggestion.price_suggestion.max);
+      }
 
       images.forEach((image, index) => {
         formDataObj.append('images', {
@@ -163,7 +180,7 @@ export default function CreateProductScreen({ navigation }) {
           <View style={{ width: 40 }} />
         </View>
         <Text style={styles.subtitle}>
-          🤖 IA analisa e sugere preço automaticamente
+          💡 Use a IA para sugerir preço (opcional)
         </Text>
       </View>
 
@@ -304,48 +321,64 @@ export default function CreateProductScreen({ navigation }) {
         </View>
       </View>
 
-      {/* AI Analysis */}
+      {/* Price */}
       <View style={styles.section}>
-        <RetroButton
-          title={priceAnalysis ? 'Analisar Novamente' : 'Analisar com IA'}
-          icon="🤖"
-          onPress={analyzeProduct}
-          loading={analyzing}
-          variant="primary"
-          size="large"
+        <Text style={styles.sectionTitle}>Preço</Text>
+        <Text style={styles.helperText}>
+          💡 Você pode definir o preço manualmente ou usar a IA para sugerir
+        </Text>
+
+        <TextInput
+          style={styles.input}
+          placeholder="R$ 0,00"
+          placeholderTextColor="#999"
+          value={formData.price}
+          onChangeText={(text) => setFormData({ ...formData, price: text })}
+          keyboardType="decimal-pad"
         />
 
-        {priceAnalysis && (
+        <TouchableOpacity
+          style={styles.aiSuggestionButton}
+          onPress={suggestPriceWithAI}
+          disabled={analyzing || images.length === 0}
+        >
+          <Text style={styles.aiSuggestionIcon}>💡</Text>
+          <Text style={styles.aiSuggestionText}>
+            {analyzing ? 'Analisando...' : 'Sugerir preço com IA (Opcional)'}
+          </Text>
+        </TouchableOpacity>
+
+        {aiSuggestion && (
           <View style={styles.analysisResult}>
-            <Text style={styles.analysisTitle}>✨ ANÁLISE DA IA</Text>
+            <Text style={styles.analysisTitle}>✨ SUGESTÃO DA IA</Text>
 
             <View style={styles.scoreRow}>
               <RetroCard style={styles.scoreCard}>
                 <Text style={styles.scoreLabel}>Condição</Text>
                 <Text style={styles.scoreValue}>
-                  {priceAnalysis.condition_score.toFixed(0)}/100
+                  {aiSuggestion.condition_score.toFixed(0)}/100
                 </Text>
               </RetroCard>
               <RetroCard style={styles.scoreCard}>
                 <Text style={styles.scoreLabel}>Raridade</Text>
                 <Text style={styles.scoreValue}>
-                  {priceAnalysis.rarity_score.toFixed(0)}/100
+                  {aiSuggestion.rarity_score.toFixed(0)}/100
                 </Text>
               </RetroCard>
             </View>
 
             <RetroCard variant="premium" style={styles.priceCard}>
-              <Text style={styles.priceLabel}>💰 PREÇO SUGERIDO</Text>
+              <Text style={styles.priceLabel}>💰 FAIXA DE PREÇO</Text>
               <Text style={styles.priceValue}>
-                R$ {priceAnalysis.price_suggestion.ideal.toFixed(2)}
+                R$ {aiSuggestion.price_suggestion.ideal.toFixed(2)}
               </Text>
               <Text style={styles.priceRange}>
-                Entre R$ {priceAnalysis.price_suggestion.min.toFixed(2)} e R${' '}
-                {priceAnalysis.price_suggestion.max.toFixed(2)}
+                Entre R$ {aiSuggestion.price_suggestion.min.toFixed(2)} e R${' '}
+                {aiSuggestion.price_suggestion.max.toFixed(2)}
               </Text>
             </RetroCard>
 
-            {priceAnalysis.insights.map((insight, index) => (
+            {aiSuggestion.insights && aiSuggestion.insights.map((insight, index) => (
               <Text key={index} style={styles.insight}>
                 • {insight}
               </Text>
@@ -360,7 +393,6 @@ export default function CreateProductScreen({ navigation }) {
         icon="✨"
         onPress={createProduct}
         loading={loading}
-        disabled={!priceAnalysis}
         variant="primary"
         size="large"
         style={styles.submitButton}
@@ -587,5 +619,31 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     margin: 20,
+  },
+  helperText: {
+    color: colors.text.secondary,
+    fontSize: 13,
+    marginBottom: 12,
+    fontStyle: 'italic',
+  },
+  aiSuggestionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.background.secondary,
+    borderWidth: 2,
+    borderColor: colors.yellow.primary,
+    borderRadius: 10,
+    padding: 16,
+    marginTop: 8,
+  },
+  aiSuggestionIcon: {
+    fontSize: 24,
+    marginRight: 8,
+  },
+  aiSuggestionText: {
+    color: colors.yellow.primary,
+    fontSize: 15,
+    fontWeight: 'bold',
   },
 });
