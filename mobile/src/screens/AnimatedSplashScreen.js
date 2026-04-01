@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import {
   View,
+  Text,
   StyleSheet,
   Animated,
   Easing,
@@ -109,12 +110,12 @@ export default function AnimatedSplashScreen({ onFinish }) {
           { opacity: particlesOpacity },
         ]}
       >
-        <View style={[styles.particle, styles.particle1]}>✨</View>
-        <View style={[styles.particle, styles.particle2]}>🎮</View>
-        <View style={[styles.particle, styles.particle3]}>👾</View>
-        <View style={[styles.particle, styles.particle4]}>🕹️</View>
-        <View style={[styles.particle, styles.particle5]}>⭐</View>
-        <View style={[styles.particle, styles.particle6]}>🎯</View>
+        <Text style={[styles.particle, styles.particle1]}>✨</Text>
+        <Text style={[styles.particle, styles.particle2]}>🎮</Text>
+        <Text style={[styles.particle, styles.particle3]}>👾</Text>
+        <Text style={[styles.particle, styles.particle4]}>🕹️</Text>
+        <Text style={[styles.particle, styles.particle5]}>⭐</Text>
+        <Text style={[styles.particle, styles.particle6]}>🎯</Text>
       </Animated.View>
 
       {/* Glow effect (brilho por trás) */}
