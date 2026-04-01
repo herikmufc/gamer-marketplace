@@ -13,9 +13,8 @@ from typing import List, Optional
 from datetime import datetime, timedelta
 from passlib.context import CryptContext
 from jose import JWTError, jwt
-import anthropic
-from openai import OpenAI
 import mercadopago
+import gemini_client
 import os
 import base64
 import re
@@ -32,8 +31,6 @@ from apscheduler.triggers.cron import CronTrigger
 from dotenv import load_dotenv
 load_dotenv()
 
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-change-me")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 10080))
@@ -71,10 +68,6 @@ Base = declarative_base()
 # Security
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-
-# AI Clients
-claude_client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY) if ANTHROPIC_API_KEY else None
-openai_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 
 # Mercado Pago Client
 mp_sdk = None
@@ -731,133 +724,24 @@ async def identify_game_by_photo(
     - Preço estimado
     - Autenticidade
     """
-    if not claude_client:
-        raise HTTPException(status_code=500, detail="Claude API não configurada")
-
     try:
         # Ler imagem
         image_data = await file.read()
 
-        # Converter para base64
-        base64_image = base64.b64encode(image_data).decode('utf-8')
+        # Detectar formato da imagem
+        image_format = "jpeg"
+        if file.filename:
+            if file.filename.lower().endswith('.png'):
+                image_format = "png"
+            elif file.filename.lower().endswith('.webp'):
+                image_format = "webp"
 
-        # Detectar tipo de imagem
-        image_type = "image/jpeg"
-        if file.filename and file.filename.lower().endswith('.png'):
-            image_type = "image/png"
-        elif file.filename and file.filename.lower().endswith('.webp'):
-            image_type = "image/webp"
+        # Chamar Gemini para identificação
+        result = gemini_client.identify_game_from_image(image_data, image_format)
 
-        # Prompt especializado em retro games Brasil
-        prompt = """Você é um especialista em jogos retro do Brasil com 20 anos de experiência em colecionismo e compra/venda.
 
-Analise esta imagem de produto retro gaming e identifique COM MÁXIMO DETALHE:
-
-1. **IDENTIFICAÇÃO:**
-   - Nome EXATO do jogo (incluir subtítulo se houver)
-   - Console específico (ex: PlayStation 1, Super Nintendo, Mega Drive, Nintendo 64, etc)
-   - Região: NTSC-U (EUA), NTSC-J (Japão), PAL (Europa/Brasil)
-   - Versão: Original, Greatest Hits, Platinum, Player's Choice, Limited Edition
-
-2. **ESTADO DE CONSERVAÇÃO (1-10):**
-   - Label/arte da capa: desgastes, amarelamento, rasgos
-   - Plástico/cartucho: arranhões, descoloração
-   - Caixa (se visível): amassados, rasgos
-   - Manual (se visível): páginas, conservação
-   - Estado geral
-
-3. **COMPLETUDE:**
-   - Tem caixa original? (sim/não/não visível)
-   - Tem manual? (sim/não/não visível)
-   - Extras visíveis: cartão de registro, pôster, insertos, mapa
-
-4. **RARIDADE NO BRASIL:**
-   - Comum: encontrado facilmente
-   - Raro: difícil de encontrar
-   - Muito Raro: muito difícil
-   - Extremamente Raro: raríssimo no mercado brasileiro
-
-5. **AUTENTICIDADE (0-100):**
-   - Sinais de produto original
-   - Sinais de alerta para falsificação:
-     * Label com impressão de baixa qualidade
-     * Fonte do texto incorreta
-     * Cor do plástico errada
-     * Parafusos comuns (originais Nintendo usam GameBit)
-     * Ausência de códigos no chip/circuito
-     * Manual com papel de qualidade inferior
-   - Score de autenticidade (0-100)
-   - Notas sobre autenticidade
-
-6. **PREÇO ESTIMADO NO BRASIL:**
-   - Faixa de preço em REAIS (R$) considerando:
-     * Estado de conservação
-     * Completude (loose/completo/lacrado)
-     * Raridade regional
-     * Demanda atual do mercado brasileiro
-   - Exemplo: "R$ 150-200" ou "R$ 450-550"
-
-7. **ANÁLISE DE MERCADO:**
-   - Demanda atual no Brasil
-   - Tendência de preço
-   - Observações relevantes sobre este título
-
-8. **CONFIANÇA NA IDENTIFICAÇÃO (0-100):**
-   - Quão certo você está desta identificação
-   - Se baixa confiança, explique por quê
-
-IMPORTANTE:
-- Se não conseguir identificar com certeza, diga isso e explique
-- Se a imagem não mostrar um produto retro gaming, informe
-- Seja específico sobre o mercado BRASILEIRO
-- Preços em REAIS (R$)
-- Considere a realidade do mercado brasileiro (importação, raridade regional)
-
-Responda em formato JSON:
-{
-  "game_name": "Nome completo do jogo",
-  "console": "Console exato",
-  "region": "NTSC-U/PAL/NTSC-J",
-  "version": "Original/Greatest Hits/etc",
-  "condition_score": 8,
-  "has_box": true,
-  "has_manual": true,
-  "has_extras": ["cartão de registro", "pôster"],
-  "rarity": "Raro/Comum/Muito Raro/Extremamente Raro",
-  "estimated_price": "R$ 300-400",
-  "authenticity_score": 85,
-  "authenticity_notes": "Label autêntica, parafusos corretos, mas plástico levemente descolorido",
-  "market_analysis": "Alta demanda no Brasil, preço em alta. RPG clássico muito procurado por colecionadores.",
-  "confidence": 95
-}"""
-
-        # Chamar Claude Vision API
-        response = claude_client.messages.create(
-            model="claude-4-6-sonnet-20250929",
-            max_tokens=2000,
-            messages=[
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "image",
-                            "source": {
-                                "type": "base64",
-                                "media_type": image_type,
-                                "data": base64_image,
-                            },
-                        },
-                        {
-                            "type": "text",
-                            "text": prompt
-                        }
-                    ],
-                }
-            ],
-        )
-
-        # Extrair resposta
-        ai_response = response.content[0].text
+        # Extrair resposta do Gemini
+        ai_response = result["text"]
 
         # Tentar extrair JSON da resposta
         try:
@@ -915,8 +799,8 @@ async def moderate_chat_message(
     - Tentativas de phishing
     - Números de telefone/contatos externos
     """
-    if not claude_client:
-        raise HTTPException(status_code=500, detail="Claude API não configurada")
+    if not gemini_client.GEMINI_API_KEY:
+        raise HTTPException(status_code=500, detail="Gemini API não configurada")
 
     try:
         # Prompt de moderação especializado
@@ -1285,8 +1169,8 @@ async def discover_events(
 
     Usa Claude para buscar eventos de jogos retro no estado especificado
     """
-    if not claude_client:
-        raise HTTPException(status_code=500, detail="Claude API não configurada")
+    if not gemini_client.GEMINI_API_KEY:
+        raise HTTPException(status_code=500, detail="Gemini API não configurada")
 
     try:
         prompt = f"""Você é um assistente que busca eventos de jogos retro no Brasil.
@@ -1500,11 +1384,11 @@ async def analyze_video_with_ai(
             "analysis_details": "..."
         }
     """
-    if not claude_client:
+    if not gemini_client.GEMINI_API_KEY:
         return {
             "match": False,
             "confidence_score": 0,
-            "issues_found": ["Claude API não configurada"],
+            "issues_found": ["Gemini API não configurada"],
             "recommendation": "review",
             "analysis_details": "IA não disponível"
         }
