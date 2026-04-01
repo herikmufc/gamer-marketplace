@@ -1,0 +1,189 @@
+🎮 GAMER MARKETPLACE - Estrutura Completa
+═══════════════════════════════════════════════════════════
+
+📂 gamer-marketplace/
+│
+├── 📚 DOCUMENTAÇÃO (6 arquivos)
+│   ├── README.md ........................... Documentação completa
+│   ├── QUICK_START.md ...................... Guia rápido de início
+│   ├── BUILD_APK.md ........................ Como gerar APK
+│   ├── AI_FEATURES.md ...................... Docs técnicas da IA
+│   ├── PROJECT_SUMMARY.md .................. Sumário do projeto
+│   └── TESTING_GUIDE.md .................... Guia de testes
+│
+├── 🔧 SCRIPTS DE AUTOMAÇÃO (3 arquivos)
+│   ├── setup.sh ............................ Setup inicial completo
+│   ├── start-backend.sh .................... Inicia backend
+│   └── start-mobile.sh ..................... Inicia mobile
+│
+├── 🐍 BACKEND (FastAPI + Python)
+│   ├── main.py ............................. API completa (700 linhas)
+│   ├── requirements.txt .................... Dependências Python
+│   ├── .env ................................ Configurações (API Keys)
+│   ├── .env.example ........................ Template do .env
+│   ├── venv/ ............................... Ambiente virtual Python
+│   └── gamer_marketplace.db ................ Database SQLite (criado ao rodar)
+│
+└── 📱 MOBILE (React Native + Expo)
+    ├── App.js .............................. Navegação principal
+    ├── app.json ............................ Configuração Expo
+    ├── package.json ........................ Dependências Node
+    │
+    ├── src/
+    │   ├── api/
+    │   │   └── client.js ................... Cliente HTTP + endpoints
+    │   │
+    │   ├── contexts/
+    │   │   └── AuthContext.js .............. Context de autenticação
+    │   │
+    │   └── screens/
+    │       ├── LoginScreen.js .............. Tela de login
+    │       ├── RegisterScreen.js ........... Tela de cadastro
+    │       ├── HomeScreen.js ............... Home + lista de produtos
+    │       ├── CreateProductScreen.js ...... Criar anúncio com IA
+    │       ├── ProductDetailScreen.js ...... Detalhes do produto
+    │       └── ProfileScreen.js ............ Perfil do usuário
+    │
+    ├── assets/ ............................. Imagens/ícones
+    └── node_modules/ ....................... Deps instaladas (740 pacotes)
+
+
+═══════════════════════════════════════════════════════════
+📊 ESTATÍSTICAS DO PROJETO
+═══════════════════════════════════════════════════════════
+
+Código:
+  • Backend: ~700 linhas Python
+  • Mobile: ~1,500 linhas JavaScript/JSX
+  • Documentação: ~2,500 linhas Markdown
+  • Total: ~4,700 linhas
+
+Arquivos:
+  • 23 arquivos principais
+  • 740+ pacotes node_modules
+  • 10 dependências Python
+
+Telas Mobile:
+  1. Login
+  2. Registro
+  3. Home (lista produtos)
+  4. Criar Anúncio (com IA)
+  5. Detalhes Produto
+  6. Perfil
+
+Features:
+  ✅ Autenticação JWT
+  ✅ Análise de IA (Claude Vision)
+  ✅ Precificação inteligente
+  ✅ Upload de imagens
+  ✅ Busca e filtros
+  ✅ Interface moderna dark mode
+
+
+═══════════════════════════════════════════════════════════
+🚀 COMO RODAR
+═══════════════════════════════════════════════════════════
+
+1️⃣ Setup Inicial (uma vez):
+   ./setup.sh
+
+2️⃣ Configurar (uma vez):
+   • API Key: backend/.env
+   • IP Backend: mobile/src/api/client.js
+
+3️⃣ Rodar Backend (terminal 1):
+   ./start-backend.sh
+
+4️⃣ Rodar Mobile (terminal 2):
+   ./start-mobile.sh
+
+5️⃣ No Celular:
+   • Instalar "Expo Go" (Play Store)
+   • Escanear QR Code
+
+
+═══════════════════════════════════════════════════════════
+📦 GERAR APK
+═══════════════════════════════════════════════════════════
+
+Opção 1 - EAS Build (Fácil):
+  cd mobile
+  npm install -g eas-cli
+  eas login
+  eas build --platform android --profile preview
+  (Aguarde ~20 min e baixe APK)
+
+Opção 2 - Expo Go (Teste rápido):
+  npx expo start
+  (Escanear QR Code com Expo Go)
+
+
+═══════════════════════════════════════════════════════════
+🤖 COMO FUNCIONA A IA
+═══════════════════════════════════════════════════════════
+
+Input:
+  → 4-5 fotos do produto
+  → Informações básicas (título, console, condição)
+
+Processamento:
+  → Claude 4.6 Vision analisa imagens
+  → Detecta arranhões, amarelamento, autenticidade
+  → Calcula raridade baseada em console/completude
+  → Sugere preço usando fórmula:
+    Preço = Base × Condição × Raridade × Completude
+
+Output:
+  → Condição: 0-100
+  → Raridade: 0-100
+  → Preço sugerido (mín/ideal/máx)
+  → Insights e recomendações
+
+Custo:
+  → ~$0.03 por análise
+  → Funciona sem API Key (valores padrão)
+
+
+═══════════════════════════════════════════════════════════
+🎯 ROADMAP
+═══════════════════════════════════════════════════════════
+
+✅ Fase 1 (Atual):
+  • Marketplace básico
+  • IA de precificação
+  • App Android funcional
+
+🔜 Fase 2:
+  • Sistema de chat
+  • Notificações push
+  • Upload cloud (Firebase/S3)
+  • Sistema de favoritos
+
+🔮 Fase 3:
+  • Pagamentos integrados
+  • Avaliações/reviews
+  • Histórico de preços
+  • Machine Learning
+
+🚀 Fase 4:
+  • Comunidade/fóruns
+  • Enciclopédia de jogos
+  • AR Showcase
+  • Sistema de trades
+  • Gamificação completa
+
+
+═══════════════════════════════════════════════════════════
+📞 SUPORTE
+═══════════════════════════════════════════════════════════
+
+Problema? Veja:
+  • README.md (troubleshooting)
+  • QUICK_START.md (guia rápido)
+  • TESTING_GUIDE.md (como testar)
+
+Status: 🟢 Pronto para uso
+Versão: 1.0.0
+Data: 2026-03-29
+
+═══════════════════════════════════════════════════════════

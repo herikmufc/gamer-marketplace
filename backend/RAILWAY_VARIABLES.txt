@@ -1,0 +1,64 @@
+# ========================================
+# VARIÁVEIS DE AMBIENTE - RAILWAY
+# ========================================
+# Copie e cole no Railway Dashboard
+# Variables → New Variable
+# ========================================
+
+# 1. SUPABASE_URL
+SUPABASE_URL=https://kpozlrvizpuekiteiece.supabase.co
+
+# 2. SUPABASE_ANON_KEY
+SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtwb3pscnZpenB1ZWtpdGVpZWNlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwMDY0MzYsImV4cCI6MjA5MDU4MjQzNn0.h_4t1tcoQlJxxjAMSEnQUW4mrgqjHU6grND_BR0T2OU
+
+# 3. SUPABASE_SERVICE_KEY
+SUPABASE_SERVICE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtwb3pscnZpenB1ZWtpdGVpZWNlIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTAwNjQzNiwiZXhwIjoyMDkwNTgyNDM2fQ.ELrBZYlWB-K1MFj7N9gBAJZm0tGGOi0H0FiJtfSudwc
+
+# 4. SUPABASE_DB_PASSWORD
+SUPABASE_DB_PASSWORD=cAmus@201996
+
+# 5. USE_SUPABASE
+USE_SUPABASE=true
+
+# 6. SECRET_KEY (IMPORTANTE: Mude em produção!)
+SECRET_KEY=gamer-marketplace-production-secret-railway-2026
+
+# 7. ALGORITHM
+ALGORITHM=HS256
+
+# 8. ACCESS_TOKEN_EXPIRE_MINUTES
+ACCESS_TOKEN_EXPIRE_MINUTES=10080
+
+# 9. ENVIRONMENT
+ENVIRONMENT=production
+
+# 10. PYTHON_VERSION (Recomendado)
+PYTHON_VERSION=3.12.0
+
+# ========================================
+# OPCIONAIS (APIs)
+# ========================================
+
+# Mercado Pago (já configurado - teste)
+MERCADOPAGO_ACCESS_TOKEN=APP_USR-3608457092984824-033014-049c2ac2128ac0e708ad77c8815e4b13-330359130
+MERCADOPAGO_PUBLIC_KEY=APP_USR-4eef51bd-d9a5-4666-8265-ea580c622172
+MERCADOPAGO_USER_ID=330359130
+PLATFORM_FEE_PERCENT=5.0
+
+# Claude API (se tiver)
+# ANTHROPIC_API_KEY=sua_key_aqui
+
+# OpenAI API (se tiver)
+# OPENAI_API_KEY=sua_key_aqui
+
+# ========================================
+# CONFIGURAÇÕES DE DEPLOY
+# ========================================
+
+Root Directory: backend
+Start Command: uvicorn main_supabase:app --host 0.0.0.0 --port $PORT
+Build Command: (deixe vazio - Railway detecta automaticamente)
+
+# ========================================
+# PRONTO! 🚀
+# ========================================

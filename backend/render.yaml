@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: gamer-marketplace
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main_supabase:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: USE_SUPABASE
+        value: true
+      - key: SUPABASE_URL
+        value: https://kpozlrvizpuekiteiece.supabase.co
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: SUPABASE_DB_PASSWORD
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ALGORITHM
+        value: HS256
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: 10080
+      - key: ENVIRONMENT
+        value: production

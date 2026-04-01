@@ -1,0 +1,132 @@
+# ========================================
+# GAMER MARKETPLACE - GITIGNORE
+# ========================================
+
+# ========================================
+# SEGURANÇA - NÃO COMMITAR NUNCA!
+# ========================================
+.env
+.env.local
+.env.production
+*.key
+*.pem
+*.p12
+secrets/
+credentials/
+
+# ========================================
+# BACKEND - PYTHON
+# ========================================
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv/
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+gamer_marketplace*.db
+
+# Logs
+*.log
+backend.log
+
+# PyCharm
+.idea/
+
+# ========================================
+# MOBILE - REACT NATIVE
+# ========================================
+# Node Modules
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Expo
+.expo/
+.expo-shared/
+dist/
+web-build/
+
+# Metro
+.metro-health-check*
+
+# macOS
+.DS_Store
+*.pem
+
+# iOS
+mobile/ios/Pods/
+mobile/ios/build/
+*.xcworkspace
+!default.xcworkspace
+
+# Android
+mobile/android/build/
+mobile/android/.gradle/
+mobile/android/app/build/
+*.apk
+*.aab
+*.jks
+*.keystore
+
+# ========================================
+# EDITORES & IDEs
+# ========================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ========================================
+# SISTEMA
+# ========================================
+.DS_Store
+Thumbs.db
+*.bak
+*.tmp
+
+# ========================================
+# TESTES & COVERAGE
+# ========================================
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+
+# ========================================
+# BUILD & DIST
+# ========================================
+build/
+dist/
+*.egg-info/
+
+# ========================================
+# TEMPORÁRIOS
+# ========================================
+*.tmp
+temp/
+tmp/
+.cache/
+
+# ========================================
+# OK PARA COMMITAR:
+# ========================================
+# .env.example (template sem senhas)
+# requirements.txt
+# package.json
+# Procfile
+# railway.json
+# render.yaml
+# *.md (documentação)
