@@ -336,25 +336,25 @@ CREATE TRIGGER update_events_updated_at
 SELECT table_name
 FROM information_schema.tables
 WHERE table_schema = 'public'
+  AND table_type = 'BASE TABLE'
 ORDER BY table_name;
 
--- Contar registros em cada tabela
-SELECT
-    schemaname,
-    tablename,
-    (SELECT COUNT(*) FROM public.users) as users,
-    (SELECT COUNT(*) FROM public.products) as products,
-    (SELECT COUNT(*) FROM public.transactions) as transactions,
-    (SELECT COUNT(*) FROM public.chat_rooms) as chat_rooms,
-    (SELECT COUNT(*) FROM public.chat_messages) as chat_messages,
-    (SELECT COUNT(*) FROM public.chat_alerts) as chat_alerts,
-    (SELECT COUNT(*) FROM public.forum_posts) as forum_posts,
-    (SELECT COUNT(*) FROM public.forum_comments) as forum_comments,
-    (SELECT COUNT(*) FROM public.events) as events,
-    (SELECT COUNT(*) FROM public.event_interests) as event_interests
-FROM pg_tables
-WHERE schemaname = 'public'
-LIMIT 1;
+-- Contar registros em cada tabela (executar APÓS criar as tabelas)
+DO $$
+BEGIN
+    RAISE NOTICE 'Verificando tabelas criadas...';
+    RAISE NOTICE 'users: % registros', (SELECT COUNT(*) FROM users);
+    RAISE NOTICE 'products: % registros', (SELECT COUNT(*) FROM products);
+    RAISE NOTICE 'transactions: % registros', (SELECT COUNT(*) FROM transactions);
+    RAISE NOTICE 'chat_rooms: % registros', (SELECT COUNT(*) FROM chat_rooms);
+    RAISE NOTICE 'chat_messages: % registros', (SELECT COUNT(*) FROM chat_messages);
+    RAISE NOTICE 'chat_alerts: % registros', (SELECT COUNT(*) FROM chat_alerts);
+    RAISE NOTICE 'forum_posts: % registros', (SELECT COUNT(*) FROM forum_posts);
+    RAISE NOTICE 'forum_comments: % registros', (SELECT COUNT(*) FROM forum_comments);
+    RAISE NOTICE 'events: % registros', (SELECT COUNT(*) FROM events);
+    RAISE NOTICE 'event_interests: % registros', (SELECT COUNT(*) FROM event_interests);
+    RAISE NOTICE '✅ Todas as tabelas criadas com sucesso!';
+END $$;
 
 -- ============================================
 -- FIM DO SCRIPT
