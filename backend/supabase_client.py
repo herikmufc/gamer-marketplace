@@ -204,27 +204,31 @@ def delete_avatar(user_id: int):
 def get_supabase_connection_string() -> str:
     """
     Get PostgreSQL connection string for SQLAlchemy
-    Format: postgresql://postgres:[PASSWORD]@[HOST]/postgres
+    Format: postgresql://postgres.[PROJECT-REF]:[PASSWORD]@[REGION].pooler.supabase.com:6543/postgres
+
+    Uses Supabase Connection Pooler (Transaction Mode) which supports IPv4
     """
     from urllib.parse import quote_plus
 
     if not SUPABASE_URL:
         raise Exception("SUPABASE_URL not configured")
 
-    # Extract host from Supabase URL
+    # Extract project ref from Supabase URL
     # https://kpozlrvizpuekiteiece.supabase.co -> kpozlrvizpuekiteiece
-    host = SUPABASE_URL.replace("https://", "").replace("http://", "").split(".")[0]
+    project_ref = SUPABASE_URL.replace("https://", "").replace("http://", "").split(".")[0]
 
-    # Supabase PostgreSQL connection details
-    # Default port is 5432, password is same as service key
-    db_host = f"db.{host}.supabase.co"
-    db_port = 5432
+    # Use custom DB host if provided (for pooler), otherwise use direct connection
+    # Pooler format: aws-1-us-east-1.pooler.supabase.com (Transaction Mode port 6543)
+    # Direct format: db.{project}.supabase.co (port 5432)
+    db_host = os.getenv("SUPABASE_DB_HOST", f"aws-1-us-east-1.pooler.supabase.com")
+    db_port = int(os.getenv("SUPABASE_DB_PORT", "6543"))  # Transaction mode pooler
     db_name = "postgres"
-    db_user = "postgres"
+    db_user = f"postgres.{project_ref}"  # Pooler requires postgres.{project_ref} format
 
-    # NOTE: You need to get the database password from Supabase Dashboard
-    # Settings → Database → Connection String → Password
-    db_password = os.getenv("SUPABASE_DB_PASSWORD", SUPABASE_SERVICE_KEY)
+    # Get database password from environment
+    db_password = os.getenv("SUPABASE_DB_PASSWORD")
+    if not db_password:
+        raise Exception("SUPABASE_DB_PASSWORD not configured")
 
     # URL encode password to handle special characters (@, #, etc)
     db_password_encoded = quote_plus(db_password)
