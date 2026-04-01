@@ -1,0 +1,64 @@
+{
+  "expo": {
+    "name": "RetroTrade Brasil",
+    "slug": "retrotrade-brasil",
+    "version": "2.3.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": false,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0f0f0f"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.retrotradebrasil.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Precisamos acessar sua câmera para gravar vídeos de verificação do produto recebido.",
+        "NSMicrophoneUsageDescription": "Precisamos acessar seu microfone para gravar vídeos com áudio."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0f0f0f"
+      },
+      "package": "com.retrotradebrasil.app",
+      "versionCode": 9,
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO",
+        "READ_MEDIA_IMAGES",
+        "READ_MEDIA_VIDEO",
+        "INTERNET",
+        "ACCESS_NETWORK_STATE"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "O app precisa acessar suas fotos para você adicionar imagens dos produtos.",
+          "cameraPermission": "O app precisa acessar sua câmera para você tirar fotos dos produtos."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Precisamos acessar sua câmera para gravar vídeos de verificação do produto recebido.",
+          "microphonePermission": "Precisamos acessar seu microfone para gravar vídeos com áudio."
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "e402e953-63a6-4312-a5e6-93c57349e10c"
+      }
+    }
+  }
+}

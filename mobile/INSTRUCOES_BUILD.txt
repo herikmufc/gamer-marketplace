@@ -1,0 +1,116 @@
+╔════════════════════════════════════════════════════════════╗
+║                                                            ║
+║     🚀 INSTRUÇÕES PARA GERAR APK - RetroTrade Brasil      ║
+║                                                            ║
+╚════════════════════════════════════════════════════════════╝
+
+✅ JÁ CONFIGURADO:
+   • IP do backend: 192.168.1.11:8000
+   • Nome do app: RetroTrade Brasil
+   • Package: com.retrotradebrasil.app
+   • Versão: 2.0.0
+
+═══════════════════════════════════════════════════════════════
+
+🎯 EXECUTE ESTES COMANDOS NO SEU TERMINAL:
+
+1️⃣ Abra um terminal e vá para a pasta mobile:
+
+   cd /home/madeinweb/gamer-marketplace/mobile
+
+
+2️⃣ Execute o comando de build:
+
+   npx eas-cli build --platform android --profile preview
+
+
+3️⃣ O sistema vai pedir login:
+
+   • Se TIVER conta Expo:
+     - Digite seu email
+     - Digite sua senha
+
+   • Se NÃO tiver conta:
+     - Pressione Ctrl+C
+     - Crie conta em: https://expo.dev/signup
+     - Volte e execute o comando novamente
+
+
+4️⃣ Aguarde o build (~20 minutos):
+
+   Você verá algo como:
+   "✔ Build started, it may take a few minutes to complete."
+
+
+5️⃣ Quando terminar:
+
+   Você receberá um LINK como este:
+   "https://expo.dev/accounts/[seu-usuario]/builds/[id]"
+
+   ABRA ESSE LINK NO SEU CELULAR!
+
+
+6️⃣ No celular:
+
+   • Abra o link
+   • Clique em "Download"
+   • Instale o APK
+   • Pronto! 🎉
+
+═══════════════════════════════════════════════════════════════
+
+⚠️ IMPORTANTE ANTES DE TESTAR O APP:
+
+O BACKEND PRECISA ESTAR RODANDO!
+
+Em outro terminal, execute:
+
+   cd /home/madeinweb/gamer-marketplace/backend
+   python main.py
+
+Deixe o backend rodando enquanto usa o app.
+
+═══════════════════════════════════════════════════════════════
+
+🆘 SE DER ERRO:
+
+1. "eas-cli not found"
+   → Está usando npx? Use: npx eas-cli build ...
+
+2. "Project not configured"
+   → Execute primeiro: npx eas-cli build:configure
+
+3. "Build failed"
+   → Verifique logs e tente novamente
+
+4. "Invalid credentials"
+   → Faça login novamente: npx eas-cli login
+
+═══════════════════════════════════════════════════════════════
+
+📱 ALTERNATIVA: TESTE RÁPIDO SEM BUILD
+
+Se quiser testar ANTES de gerar APK:
+
+Terminal 1 (Backend):
+   cd backend
+   python main.py
+
+Terminal 2 (Mobile):
+   cd mobile
+   npx expo start
+
+No celular:
+   • Instale "Expo Go" (Play Store)
+   • Escaneie QR Code
+   • App abre direto!
+
+═══════════════════════════════════════════════════════════════
+
+✅ PRONTO PARA COMEÇAR!
+
+Execute no terminal:
+
+cd /home/madeinweb/gamer-marketplace/mobile && npx eas-cli build --platform android --profile preview
+
+Boa sorte! 🚀

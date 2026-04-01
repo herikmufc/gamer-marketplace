@@ -1,0 +1,302 @@
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Backend URL - Render Production
+// Local development: http://10.0.2.2:8000 (Android emulator)
+// Production: Render + Supabase PostgreSQL
+const API_URL = 'https://gamer-marketplace.onrender.com';
+
+const apiClient = axios.create({
+  baseURL: API_URL,
+  timeout: 15000, // 15 segundos
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  validateStatus: (status) => status >= 200 && status < 500, // Aceitar respostas 4xx também
+});
+
+// Add token to requests
+apiClient.interceptors.request.use(
+  async (config) => {
+    const token = await AsyncStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    console.log('❌ Request interceptor error:', error);
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor
+apiClient.interceptors.response.use(
+  (response) => {
+    console.log('✅ Response received:', response.config.url, response.status);
+    return response;
+  },
+  (error) => {
+    console.log('❌ Response error:', error.message);
+    console.log('❌ Error config:', error.config);
+    console.log('❌ Error response:', error.response);
+    return Promise.reject(error);
+  }
+);
+
+// Auth API
+export const auth = {
+  register: async (userData) => {
+    const response = await apiClient.post('/register', userData);
+    return response.data;
+  },
+
+  login: async (username, password) => {
+    try {
+      console.log('📡 [LOGIN] Iniciando login para:', username);
+
+      // Criar FormData para enviar como application/x-www-form-urlencoded
+      const formData = new URLSearchParams();
+      formData.append('username', username);
+      formData.append('password', password);
+
+      console.log('📡 [LOGIN] Enviando requisição para /token');
+
+      // Usar apiClient ao invés de axios direto
+      const response = await apiClient.post('/token', formData.toString(), {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        timeout: 15000,
+      });
+
+      console.log('✅ [LOGIN] Resposta recebida:', response.status);
+      console.log('✅ [LOGIN] Token:', response.data?.access_token ? 'OK' : 'FALTANDO');
+
+      if (response.data && response.data.access_token) {
+        await AsyncStorage.setItem('token', response.data.access_token);
+        console.log('✅ [LOGIN] Token salvo no AsyncStorage');
+        return response.data;
+      } else {
+        throw new Error('Token não retornado pelo servidor');
+      }
+    } catch (error) {
+      console.log('❌ [LOGIN] Erro completo:', error);
+      console.log('❌ [LOGIN] Error.message:', error.message);
+      console.log('❌ [LOGIN] Error.response:', error.response?.data);
+      throw error;
+    }
+  },
+
+  logout: async () => {
+    await AsyncStorage.removeItem('token');
+  },
+
+  getMe: async () => {
+    try {
+      console.log('📡 [GET_ME] Buscando dados do usuário...');
+      const response = await apiClient.get('/me', {
+        timeout: 15000,
+      });
+      console.log('✅ [GET_ME] Dados recebidos:', response.data?.username);
+      return response.data;
+    } catch (error) {
+      console.log('❌ [GET_ME] Erro:', error.message);
+      console.log('❌ [GET_ME] Response:', error.response?.data);
+      throw error;
+    }
+  },
+};
+
+// Products API
+export const products = {
+  list: async (params = {}) => {
+    const response = await apiClient.get('/products', { params });
+    return response.data;
+  },
+
+  get: async (id) => {
+    const response = await apiClient.get(`/products/${id}`);
+    return response.data;
+  },
+
+  search: async (query) => {
+    const response = await apiClient.get('/search', { params: { q: query } });
+    return response.data;
+  },
+
+  analyze: async (formData) => {
+    const response = await apiClient.post('/products/analyze', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  create: async (formData) => {
+    const response = await apiClient.post('/products', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  identifyGame: async (imageUri) => {
+    try {
+      console.log('🔍 [IDENTIFY] Enviando imagem para identificação:', imageUri);
+
+      // Criar FormData
+      const formData = new FormData();
+
+      // Extrair nome do arquivo e tipo
+      const filename = imageUri.split('/').pop();
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : 'image/jpeg';
+
+      // Adicionar arquivo
+      formData.append('file', {
+        uri: imageUri,
+        name: filename,
+        type: type,
+      });
+
+      console.log('📤 [IDENTIFY] Enviando para /products/identify');
+
+      const response = await apiClient.post('/products/identify', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        timeout: 30000, // 30 segundos (Claude Vision pode demorar)
+      });
+
+      console.log('✅ [IDENTIFY] Resposta recebida:', response.status);
+
+      if (response.status === 200) {
+        return response.data;
+      } else {
+        throw new Error(response.data?.detail || 'Erro ao identificar jogo');
+      }
+    } catch (error) {
+      console.error('❌ [IDENTIFY] Erro:', error.message);
+      console.error('❌ [IDENTIFY] Response:', error.response?.data);
+      throw error;
+    }
+  },
+};
+
+// Events API
+export const events = {
+  list: async (params = {}) => {
+    const response = await apiClient.get('/events', { params });
+    return response.data;
+  },
+
+  get: async (id) => {
+    const response = await apiClient.get(`/events/${id}`);
+    return response.data;
+  },
+
+  discover: async (state) => {
+    const response = await apiClient.post('/events/discover', { state });
+    return response.data;
+  },
+
+  markInterest: async (eventId) => {
+    const response = await apiClient.post(`/events/${eventId}/interest`);
+    return response.data;
+  },
+
+  removeInterest: async (eventId) => {
+    const response = await apiClient.delete(`/events/${eventId}/interest`);
+    return response.data;
+  },
+};
+
+// Chat Moderation API
+export const moderation = {
+  moderateMessage: async (roomId, messageContent) => {
+    const response = await apiClient.post('/chat/moderate-message', {
+      room_id: roomId,
+      message_content: messageContent,
+    });
+    return response.data;
+  },
+
+  getAlerts: async (unresolvedOnly = true) => {
+    const response = await apiClient.get('/chat/alerts', {
+      params: { unresolved_only: unresolvedOnly },
+    });
+    return response.data;
+  },
+};
+
+// Payment API
+export const payment = {
+  // Criar novo pagamento
+  create: async (productId, paymentMethodId = 'pix', installments = 1) => {
+    const response = await apiClient.post('/payment/create', {
+      product_id: productId,
+      payment_method_id: paymentMethodId,
+      installments: installments,
+    });
+    return response.data;
+  },
+
+  // Consultar transação
+  get: async (transactionId) => {
+    const response = await apiClient.get(`/payment/${transactionId}`);
+    return response.data;
+  },
+
+  // Vendedor marca como enviado
+  markAsShipped: async (transactionId, trackingCode) => {
+    const response = await apiClient.post(`/payment/${transactionId}/ship`, {
+      tracking_code: trackingCode,
+    });
+    return response.data;
+  },
+
+  // Comprador envia vídeo de verificação
+  uploadVideo: async (transactionId, videoFile) => {
+    const formData = new FormData();
+    formData.append('video_file', {
+      uri: videoFile.uri,
+      type: videoFile.type || 'video/mp4',
+      name: videoFile.name || 'verification.mp4',
+    });
+
+    const response = await apiClient.post(
+      `/payment/${transactionId}/verify-video`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    return response.data;
+  },
+
+  // Liberar pagamento
+  release: async (transactionId) => {
+    const response = await apiClient.post(`/payment/${transactionId}/release`);
+    return response.data;
+  },
+
+  // Abrir reclamação
+  dispute: async (transactionId, reason) => {
+    const response = await apiClient.post(`/payment/${transactionId}/dispute`, {
+      reason: reason,
+    });
+    return response.data;
+  },
+
+  // Listar minhas transações
+  listMyTransactions: async (asBuyer = true) => {
+    const response = await apiClient.get('/my-transactions', {
+      params: { as_buyer: asBuyer },
+    });
+    return response.data;
+  },
+};
+
+export const api = apiClient;
+export default apiClient;
