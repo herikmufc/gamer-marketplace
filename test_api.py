@@ -10,7 +10,7 @@ from datetime import datetime
 from typing import Dict, Any
 
 # Configuração
-BASE_URL = "https://retrotrade-brasil.onrender.com"
+BASE_URL = "https://gamer-marketplace.onrender.com"
 # Para teste local, use: BASE_URL = "http://localhost:8000"
 
 class Colors:
@@ -144,7 +144,8 @@ class APITester:
             "username": f"teste_{int(datetime.now().timestamp())}",
             "password": "senha123",
             "full_name": "Usuario de Teste",
-            "cpf": "12345678909"
+            "cpf": "12345678909",
+            "phone": "11999999999"
         }
 
         if self.test_endpoint("Registro de Usuário", "POST", "/register", data=test_user):

@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // Backend URL - Render Production
 // Local development: http://10.0.2.2:8000 (Android emulator)
 // Production: Render + Supabase PostgreSQL
-const API_URL = 'https://retrotrade-brasil.onrender.com';
+const API_URL = 'https://gamer-marketplace.onrender.com';
 
 const apiClient = axios.create({
   baseURL: API_URL,

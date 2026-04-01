@@ -1,0 +1,44 @@
+{
+  "passed": 6,
+  "failed": 1,
+  "skipped": 0,
+  "tests": [
+    {
+      "name": "Health Check",
+      "status": "passed",
+      "response_code": 200
+    },
+    {
+      "name": "Root Endpoint",
+      "status": "passed",
+      "response_code": 200
+    },
+    {
+      "name": "Registro de Usuário",
+      "status": "failed",
+      "expected": 200,
+      "received": 422,
+      "error": "{\"detail\":[{\"type\":\"missing\",\"loc\":[\"body\",\"phone\"],\"msg\":\"Field required\",\"input\":{\"email\":\"teste_1775086446.734327@example.com\",\"username\":\"teste_1775086446\",\"password\":\"senha123\",\"full_name\":\"Usuar"
+    },
+    {
+      "name": "Listar Produtos",
+      "status": "passed",
+      "response_code": 200
+    },
+    {
+      "name": "Buscar Produtos",
+      "status": "passed",
+      "response_code": 200
+    },
+    {
+      "name": "Listar Posts do Fórum",
+      "status": "passed",
+      "response_code": 200
+    },
+    {
+      "name": "Listar Eventos",
+      "status": "passed",
+      "response_code": 200
+    }
+  ]
+}
