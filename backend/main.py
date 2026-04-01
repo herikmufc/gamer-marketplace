@@ -364,6 +364,36 @@ class ForumCommentCreate(BaseModel):
     content: str
     parent_comment_id: Optional[int] = None
 
+class ProductResponse(BaseModel):
+    model_config = {"from_attributes": True}
+
+    id: int
+    title: str
+    description: str
+    category: str
+    console_type: str
+    condition_score: Optional[float]
+    rarity_score: Optional[float]
+    price_min: Optional[float]
+    price_ideal: Optional[float]
+    price_max: Optional[float]
+    final_price: Optional[float]
+    is_working: bool
+    is_complete: bool
+    has_box: bool
+    has_manual: bool
+    images: Optional[str]
+    ai_analysis: Optional[str]
+    owner: UserResponse
+    created_at: datetime
+    is_sold: bool
+
+class PriceAnalysisResponse(BaseModel):
+    condition_score: float
+    rarity_score: float
+    price_suggestion: dict
+    insights: List[str]
+
 # ============================================
 # FASTAPI APP
 # ============================================
@@ -433,6 +463,67 @@ def mask_cpf(cpf: str) -> str:
     return f"{cpf_clean[:3]}.{cpf_clean[3:6]}.{cpf_clean[6:9]}-**"
 
 # ============================================
+# PRODUCT HELPER FUNCTIONS
+# ============================================
+
+def calculate_rarity_score(product_info: dict) -> float:
+    """Calculate rarity score based on product metadata"""
+    score = 50.0  # Base score
+
+    # Adjust based on console type (simplified)
+    rare_consoles = ["dreamcast", "saturn", "neo geo", "turbografx", "atari jaguar", "3do"]
+    console = product_info.get('console_type', '').lower()
+    if any(rare in console for rare in rare_consoles):
+        score += 30
+
+    # Adjust for completeness
+    if product_info.get('is_complete'):
+        score += 15
+    if product_info.get('has_box'):
+        score += 10
+    if product_info.get('has_manual'):
+        score += 5
+
+    return min(score, 100.0)
+
+def calculate_price_suggestion(condition_score: float, rarity_score: float, product_info: dict) -> dict:
+    """Calculate price suggestion based on scores"""
+    # Base price by category (Brazilian market averages)
+    base_prices = {
+        "game": 80.0,
+        "console": 350.0,
+        "peripheral": 120.0
+    }
+
+    base_price = base_prices.get(product_info.get('category', 'game'), 100.0)
+
+    # Adjust by condition (40% weight)
+    condition_multiplier = 0.6 + (condition_score / 100) * 0.8  # 0.6x to 1.4x
+
+    # Adjust by rarity (30% weight)
+    rarity_multiplier = 0.8 + (rarity_score / 100) * 0.6  # 0.8x to 1.4x
+
+    # Adjust by completeness (30% weight)
+    completeness_bonus = 1.0
+    if product_info.get('has_box'):
+        completeness_bonus += 0.25
+    if product_info.get('has_manual'):
+        completeness_bonus += 0.15
+    if product_info.get('is_complete'):
+        completeness_bonus += 0.20
+
+    # Calculate final prices
+    ideal_price = base_price * condition_multiplier * rarity_multiplier * completeness_bonus
+    min_price = ideal_price * 0.85
+    max_price = ideal_price * 1.20
+
+    return {
+        "min": round(min_price, 2),
+        "ideal": round(ideal_price, 2),
+        "max": round(max_price, 2)
+    }
+
+# ============================================
 # ENDPOINTS - AUTH
 # ============================================
 
@@ -498,6 +589,222 @@ async def get_me(current_user: User = Depends(get_current_user)):
     response = UserResponse.model_validate(current_user)
     response.cpf = mask_cpf(current_user.cpf)
     return response
+
+# ============================================
+# ENDPOINTS - HEALTH CHECK
+# ============================================
+
+@app.get("/health")
+def health_check():
+    """Health check endpoint"""
+    return {
+        "status": "healthy",
+        "database": "connected" if SessionLocal else "disconnected",
+        "gemini_api": "configured" if os.getenv("GEMINI_API_KEY") else "not_configured",
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+# ============================================
+# ENDPOINTS - PRODUCTS
+# ============================================
+
+@app.post("/products/analyze", response_model=PriceAnalysisResponse)
+async def analyze_product(
+    title: str,
+    category: str,
+    console_type: str,
+    is_working: bool = True,
+    is_complete: bool = False,
+    has_box: bool = False,
+    has_manual: bool = False,
+    images: List[UploadFile] = File(...),
+    current_user: User = Depends(get_current_user),
+):
+    """Analyze product images and provide price suggestion using Gemini AI"""
+
+    try:
+        # Convert first image to bytes for Gemini
+        if images:
+            image_bytes = await images[0].read()
+            # Resize if needed
+            img = Image.open(BytesIO(image_bytes))
+            if img.width > 1024 or img.height > 1024:
+                img.thumbnail((1024, 1024))
+            buffered = BytesIO()
+            img.save(buffered, format="JPEG")
+            image_data = buffered.getvalue()
+
+        product_info = {
+            "title": title,
+            "category": category,
+            "console_type": console_type,
+            "is_working": is_working,
+            "is_complete": is_complete,
+            "has_box": has_box,
+            "has_manual": has_manual
+        }
+
+        # Use basic scoring for now (Gemini integration can be enhanced later)
+        condition_score = 75.0 if is_working else 50.0
+        if has_box:
+            condition_score += 5
+        if has_manual:
+            condition_score += 5
+
+        # Calculate rarity
+        rarity_score = calculate_rarity_score(product_info)
+
+        # Price suggestion
+        price_suggestion = calculate_price_suggestion(condition_score, rarity_score, product_info)
+
+        # Generate insights
+        insights = [
+            f"🎮 Condição avaliada: {condition_score:.0f}/100",
+            f"💎 Raridade: {rarity_score:.0f}/100",
+            f"💰 Preço sugerido: R$ {price_suggestion['ideal']:.2f}"
+        ]
+
+        if condition_score >= 85:
+            insights.append("⭐ Excelente estado! Você pode cobrar acima da média")
+        elif condition_score < 60:
+            insights.append("⚠️ Estado comprometido pode dificultar venda")
+
+        if rarity_score >= 70:
+            insights.append("🔥 Item raro! Alta demanda no mercado")
+
+        return {
+            "condition_score": condition_score,
+            "rarity_score": rarity_score,
+            "price_suggestion": price_suggestion,
+            "insights": insights
+        }
+
+    except Exception as e:
+        print(f"❌ Error in analyze_product: {e}")
+        raise HTTPException(status_code=500, detail=f"Erro ao analisar produto: {str(e)}")
+
+@app.post("/products", response_model=ProductResponse)
+async def create_product(
+    title: str,
+    description: str,
+    category: str,
+    console_type: str,
+    final_price: float,
+    is_working: bool = True,
+    is_complete: bool = False,
+    has_box: bool = False,
+    has_manual: bool = False,
+    condition_score: float = 70.0,
+    rarity_score: float = 50.0,
+    price_min: float = 0,
+    price_ideal: float = 0,
+    price_max: float = 0,
+    images: List[UploadFile] = File(...),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Create a new product listing"""
+
+    try:
+        # Save images to Supabase Storage (simplified for now)
+        image_urls = []
+        for idx, image_file in enumerate(images):
+            # For now, just store a placeholder
+            # In production, upload to Supabase Storage
+            image_urls.append(f"product_{current_user.id}_{datetime.utcnow().timestamp()}_{idx}.jpg")
+
+        product = Product(
+            title=title,
+            description=description,
+            category=category,
+            console_type=console_type,
+            condition_score=condition_score,
+            rarity_score=rarity_score,
+            price_min=price_min,
+            price_ideal=price_ideal,
+            price_max=price_max,
+            final_price=final_price,
+            is_working=is_working,
+            is_complete=is_complete,
+            has_box=has_box,
+            has_manual=has_manual,
+            images=json.dumps(image_urls),
+            owner_id=current_user.id
+        )
+
+        db.add(product)
+        db.commit()
+        db.refresh(product)
+
+        return product
+
+    except Exception as e:
+        db.rollback()
+        print(f"❌ Error creating product: {e}")
+        raise HTTPException(status_code=500, detail=f"Erro ao criar produto: {str(e)}")
+
+@app.get("/products", response_model=List[ProductResponse])
+def list_products(
+    skip: int = 0,
+    limit: int = 20,
+    category: Optional[str] = None,
+    console_type: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    """List products with filters"""
+    try:
+        query = db.query(Product).filter(Product.is_sold == False)
+
+        if category:
+            query = query.filter(Product.category == category)
+        if console_type:
+            query = query.filter(Product.console_type == console_type)
+
+        products = query.order_by(desc(Product.created_at)).offset(skip).limit(limit).all()
+        return products
+
+    except Exception as e:
+        print(f"❌ Error listing products: {e}")
+        raise HTTPException(status_code=500, detail=f"Erro ao listar produtos: {str(e)}")
+
+@app.get("/products/{product_id}", response_model=ProductResponse)
+def get_product(product_id: int, db: Session = Depends(get_db)):
+    """Get product by ID"""
+    try:
+        product = db.query(Product).filter(Product.id == product_id).first()
+        if not product:
+            raise HTTPException(status_code=404, detail="Produto não encontrado")
+
+        # Increment views
+        product.views_count += 1
+        db.commit()
+
+        return product
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Error getting product: {e}")
+        raise HTTPException(status_code=500, detail=f"Erro ao buscar produto: {str(e)}")
+
+@app.get("/search")
+def search_products(q: str, db: Session = Depends(get_db)):
+    """Search products by title or description"""
+    try:
+        products = db.query(Product).filter(
+            or_(
+                Product.title.ilike(f"%{q}%"),
+                Product.description.ilike(f"%{q}%"),
+                Product.console_type.ilike(f"%{q}%")
+            ),
+            Product.is_sold == False
+        ).limit(50).all()
+
+        return products
+
+    except Exception as e:
+        print(f"❌ Error searching products: {e}")
+        raise HTTPException(status_code=500, detail=f"Erro ao buscar produtos: {str(e)}")
 
 # ============================================
 # ENDPOINTS - CHAT

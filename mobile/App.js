@@ -18,6 +18,7 @@ import ProfileScreen from './src/screens/ProfileScreen';
 import ChatListScreen from './src/screens/ChatListScreen';
 import ForumCategoriesScreen from './src/screens/ForumCategoriesScreen';
 import ForumTopicsScreen from './src/screens/ForumTopicsScreen';
+import CreateForumTopicScreen from './src/screens/CreateForumTopicScreen';
 import IdentifyGameScreen from './src/screens/IdentifyGameScreen';
 import EventsScreen from './src/screens/EventsScreen';
 import EventDetailScreen from './src/screens/EventDetailScreen';
@@ -134,6 +135,7 @@ function AppStack() {
       <Stack.Screen name="IdentifyGame" component={IdentifyGameScreen} />
       <Stack.Screen name="EventDetail" component={EventDetailScreen} />
       <Stack.Screen name="ForumTopics" component={ForumTopicsScreen} />
+      <Stack.Screen name="CreateForumTopic" component={CreateForumTopicScreen} />
       <Stack.Screen name="Checkout" component={CheckoutScreen} />
       <Stack.Screen name="VideoVerification" component={VideoVerificationScreen} />
       <Stack.Screen name="MyTransactions" component={MyTransactionsScreen} />
