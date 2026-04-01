@@ -15,6 +15,7 @@ from passlib.context import CryptContext
 from jose import JWTError, jwt
 import mercadopago
 import gemini_client
+from maintenance_assistant import maintenance_assistant
 import os
 import base64
 import re
@@ -2089,6 +2090,169 @@ async def manually_run_auto_release(current_user: User = Depends(get_current_use
         "success": True,
         "message": "Job de auto-liberação executado manualmente"
     }
+
+
+# ============================================
+# ENDPOINTS - ASSISTENTE DE MANUTENÇÃO 🛠️
+# ============================================
+
+@app.post("/maintenance/chat")
+async def maintenance_chat(
+    message: str,
+    console: Optional[str] = None,
+    images: Optional[List[UploadFile]] = File(None),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    🛠️ CHAT COM ASSISTENTE DE MANUTENÇÃO
+
+    Chatbot especializado em diagnóstico e reparo de consoles retro
+    Aceita texto, fotos e vídeos para análise
+    """
+    try:
+        # Process images if provided
+        image_data_list = []
+        if images:
+            for img_file in images[:3]:  # Max 3 images
+                img_data = await img_file.read()
+                image_data_list.append(img_data)
+
+        # Get AI response
+        result = maintenance_assistant.analyze_problem(
+            user_message=message,
+            images=image_data_list if image_data_list else None
+        )
+
+        if not result["success"]:
+            raise HTTPException(status_code=500, detail=result.get("error", "Erro ao processar"))
+
+        return {
+            "success": True,
+            "response": result["response"],
+            "has_media": result.get("has_media", False)
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro: {str(e)}")
+
+
+@app.post("/maintenance/start")
+async def start_maintenance_session(
+    console: Optional[str] = None,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    🚀 INICIAR SESSÃO DE MANUTENÇÃO
+
+    Inicia uma nova conversa com o assistente de manutenção
+    """
+    try:
+        greeting = maintenance_assistant.start_conversation(console)
+
+        return {
+            "success": True,
+            "greeting": greeting
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro: {str(e)}")
+
+
+@app.get("/maintenance/tips/{console}")
+async def get_maintenance_tips(
+    console: str,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    💡 DICAS DE MANUTENÇÃO PREVENTIVA
+
+    Retorna dicas específicas para manutenção de um console
+    """
+    try:
+        result = maintenance_assistant.get_quick_tips(console)
+
+        if not result["success"]:
+            raise HTTPException(status_code=500, detail=result.get("error", "Erro ao buscar dicas"))
+
+        # Try to parse JSON response
+        response_text = result["response"]
+        try:
+            json_start = response_text.find('{')
+            json_end = response_text.rfind('}') + 1
+            if json_start != -1 and json_end > json_start:
+                tips_data = json.loads(response_text[json_start:json_end])
+                return {
+                    "success": True,
+                    "tips": tips_data
+                }
+        except:
+            pass
+
+        return {
+            "success": True,
+            "tips": response_text
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro: {str(e)}")
+
+
+@app.post("/maintenance/diagnose")
+async def diagnose_problem(
+    console: str,
+    problem_description: str,
+    media: UploadFile = File(...),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    🔍 DIAGNÓSTICO POR FOTO/VÍDEO
+
+    Envia foto ou vídeo do problema para diagnóstico automático
+    """
+    try:
+        # Read media file
+        media_data = await media.read()
+
+        # Determine media type
+        media_type = "image"
+        if media.filename and any(ext in media.filename.lower() for ext in ['.mp4', '.mov', '.avi']):
+            media_type = "video"
+
+        # Get diagnosis
+        result = maintenance_assistant.identify_problem_from_media(
+            console=console,
+            problem_description=problem_description,
+            media_data=media_data,
+            media_type=media_type
+        )
+
+        if not result["success"]:
+            raise HTTPException(status_code=500, detail=result.get("error", "Erro ao diagnosticar"))
+
+        # Try to parse JSON response
+        response_text = result["response"]
+        try:
+            json_start = response_text.find('{')
+            json_end = response_text.rfind('}') + 1
+            if json_start != -1 and json_end > json_start:
+                diagnosis_data = json.loads(response_text[json_start:json_end])
+                return {
+                    "success": True,
+                    "diagnosis": diagnosis_data,
+                    "raw_response": response_text
+                }
+        except:
+            pass
+
+        return {
+            "success": True,
+            "diagnosis": None,
+            "raw_response": response_text
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro: {str(e)}")
+
 
 if __name__ == "__main__":
     import uvicorn

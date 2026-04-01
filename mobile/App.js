@@ -24,6 +24,7 @@ import CheckoutScreen from './src/screens/CheckoutScreen';
 import VideoVerificationScreen from './src/screens/VideoVerificationScreen';
 import MyTransactionsScreen from './src/screens/MyTransactionsScreen';
 import TransactionDetailScreen from './src/screens/TransactionDetailScreen';
+import MaintenanceScreen from './src/screens/MaintenanceScreen';
 
 // Theme
 import { colors } from './src/theme/colors';
@@ -88,6 +89,15 @@ function MainTabs() {
         options={{
           tabBarIcon: ({ focused }) => (
             <TabIcon label="Fórum" icon="🎮" focused={focused} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="MaintenanceTab"
+        component={MaintenanceScreen}
+        options={{
+          tabBarIcon: ({ focused }) => (
+            <TabIcon label="Manutenção" icon="🛠️" focused={focused} />
           ),
         }}
       />
