@@ -1,0 +1,56 @@
+{
+  "passed": 0,
+  "failed": 7,
+  "skipped": 0,
+  "tests": [
+    {
+      "name": "Health Check",
+      "status": "failed",
+      "expected": 200,
+      "received": 404,
+      "error": "Not Found\n"
+    },
+    {
+      "name": "Root Endpoint",
+      "status": "failed",
+      "expected": 200,
+      "received": 404,
+      "error": "Not Found\n"
+    },
+    {
+      "name": "Registro de Usuário",
+      "status": "failed",
+      "expected": 200,
+      "received": 404,
+      "error": "Not Found\n"
+    },
+    {
+      "name": "Listar Produtos",
+      "status": "failed",
+      "expected": 200,
+      "received": 404,
+      "error": "Not Found\n"
+    },
+    {
+      "name": "Buscar Produtos",
+      "status": "failed",
+      "expected": 200,
+      "received": 404,
+      "error": "Not Found\n"
+    },
+    {
+      "name": "Listar Posts do Fórum",
+      "status": "failed",
+      "expected": 200,
+      "received": 404,
+      "error": "Not Found\n"
+    },
+    {
+      "name": "Listar Eventos",
+      "status": "failed",
+      "expected": 200,
+      "received": 404,
+      "error": "Not Found\n"
+    }
+  ]
+}
