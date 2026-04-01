@@ -44,9 +44,27 @@ MERCADOPAGO_PUBLIC_KEY = os.getenv("MERCADOPAGO_PUBLIC_KEY")
 MERCADOPAGO_WEBHOOK_SECRET = os.getenv("MERCADOPAGO_WEBHOOK_SECRET")
 PLATFORM_FEE_PERCENT = float(os.getenv("PLATFORM_FEE_PERCENT", 5.0))
 
-# Database Setup
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./gamer_marketplace_v2.db")
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+# Database Setup - Support both SQLite and Supabase PostgreSQL
+USE_SUPABASE = os.getenv("USE_SUPABASE", "false").lower() == "true"
+
+if USE_SUPABASE:
+    # Use Supabase PostgreSQL
+    try:
+        from supabase_client import get_supabase_connection_string
+        DATABASE_URL = get_supabase_connection_string()
+        engine = create_engine(DATABASE_URL, pool_pre_ping=True)
+        print("✅ Using Supabase PostgreSQL")
+    except Exception as e:
+        print(f"⚠️ Error connecting to Supabase: {e}")
+        print("⚠️ Falling back to SQLite")
+        DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./gamer_marketplace_v2.db")
+        engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+else:
+    # Use SQLite (local development)
+    DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./gamer_marketplace_v2.db")
+    engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+    print("⚠️ Using SQLite (local development)")
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
