@@ -19,7 +19,7 @@ class MaintenanceAssistant:
     """
 
     def __init__(self):
-        self.model = genai.GenerativeModel('gemini-1.5-flash')
+        self.model = genai.GenerativeModel('gemini-1.5-flash-latest')
         self.conversation_history = []
         self.system_prompt = """Você é um técnico especialista em manutenção e reparo de consoles retro com 25 anos de experiência.
 

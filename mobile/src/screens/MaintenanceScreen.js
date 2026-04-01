@@ -221,7 +221,7 @@ export default function MaintenanceScreen() {
           {messages.map(renderMessage)}
           {loading && (
             <View style={[styles.messageBubble, styles.botBubble]}>
-              <ActivityIndicator color={colors.primary} />
+              <ActivityIndicator color={colors.yellow.primary} />
               <Text style={styles.botText}>Analisando...</Text>
             </View>
           )}
@@ -265,7 +265,7 @@ export default function MaintenanceScreen() {
           <TextInput
             style={styles.input}
             placeholder="Descreva o problema..."
-            placeholderTextColor={colors.textSecondary}
+            placeholderTextColor={colors.text.muted}
             value={inputText}
             onChangeText={setInputText}
             multiline
@@ -291,22 +291,22 @@ export default function MaintenanceScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.background.primary,
   },
   header: {
     padding: 20,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.background.secondary,
     borderBottomWidth: 2,
-    borderBottomColor: colors.primary,
+    borderBottomColor: colors.yellow.primary,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: colors.primary,
+    color: colors.yellow.primary,
   },
   headerSubtitle: {
     fontSize: 14,
-    color: colors.textSecondary,
+    color: colors.text.secondary,
     marginTop: 4,
   },
   content: {
@@ -327,23 +327,23 @@ const styles = StyleSheet.create({
   },
   botBubble: {
     alignSelf: 'flex-start',
-    backgroundColor: colors.surface,
+    backgroundColor: colors.background.secondary,
     borderWidth: 1,
-    borderColor: colors.primary,
+    borderColor: colors.yellow.primary,
   },
   userBubble: {
     alignSelf: 'flex-end',
-    backgroundColor: colors.primary,
+    backgroundColor: colors.yellow.primary,
   },
   messageText: {
     fontSize: 15,
     lineHeight: 20,
   },
   botText: {
-    color: colors.text,
+    color: colors.text.primary,
   },
   userText: {
-    color: colors.background,
+    color: colors.background.primary,
   },
   messageImages: {
     flexDirection: 'row',
@@ -359,9 +359,9 @@ const styles = StyleSheet.create({
   },
   selectedImagesContainer: {
     padding: 12,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.background.secondary,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
+    borderTopColor: colors.border.dark,
   },
   selectedImageWrapper: {
     position: 'relative',
@@ -391,9 +391,9 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     padding: 12,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.background.secondary,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
+    borderTopColor: colors.border.dark,
     alignItems: 'flex-end',
   },
   imageButton: {
@@ -401,7 +401,7 @@ const styles = StyleSheet.create({
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.background,
+    backgroundColor: colors.background.tertiary,
     borderRadius: 20,
     marginRight: 8,
   },
@@ -410,18 +410,18 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.background.tertiary,
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    color: colors.text,
+    color: colors.text.primary,
     maxHeight: 100,
     fontSize: 15,
   },
   sendButton: {
     width: 40,
     height: 40,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.yellow.primary,
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
@@ -431,7 +431,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   sendButtonText: {
-    color: colors.background,
+    color: colors.background.primary,
     fontSize: 20,
     fontWeight: 'bold',
   },
