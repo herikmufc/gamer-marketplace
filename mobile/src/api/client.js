@@ -8,7 +8,7 @@ const API_URL = 'https://gamer-marketplace.onrender.com';
 
 const apiClient = axios.create({
   baseURL: API_URL,
-  timeout: 15000, // 15 segundos
+  timeout: 60000, // 60 segundos (cold start do Render pode demorar ~30s)
   headers: {
     'Content-Type': 'application/json',
   },
@@ -67,7 +67,7 @@ export const auth = {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
-        timeout: 15000,
+        timeout: 60000,
       });
 
       console.log('✅ [LOGIN] Resposta recebida:', response.status);
@@ -96,7 +96,7 @@ export const auth = {
     try {
       console.log('📡 [GET_ME] Buscando dados do usuário...');
       const response = await apiClient.get('/me', {
-        timeout: 15000,
+        timeout: 60000,
       });
       console.log('✅ [GET_ME] Dados recebidos:', response.data?.username);
       return response.data;
