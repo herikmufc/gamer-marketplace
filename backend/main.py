@@ -603,6 +603,8 @@ def health_check():
         "status": "healthy",
         "database": "connected" if SessionLocal else "disconnected",
         "gemini_api": "configured" if os.getenv("GEMINI_API_KEY") else "not_configured",
+        "gemini_model": "gemini-1.5-flash",
+        "version": "2.0.1",
         "timestamp": datetime.utcnow().isoformat()
     }
 
