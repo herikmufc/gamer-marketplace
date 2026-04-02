@@ -89,6 +89,7 @@ class User(Base):
     hashed_password = Column(String)
     full_name = Column(String)
     created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     is_active = Column(Boolean, default=True)
     is_technician = Column(Boolean, default=False)
     reputation_score = Column(Integer, default=0)
@@ -240,7 +241,8 @@ class Transaction(Base):
     seller_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
     # Mercado Pago
-    mp_payment_id = Column(String, unique=True, index=True)  # ID do pagamento no MP
+    payment_id = Column(String, unique=True, index=True)  # ID do pagamento no MP (renomeado de mp_payment_id)
+    payment_method = Column(String)  # Método de pagamento usado
     mp_preference_id = Column(String)  # ID da preferência de pagamento
     mp_status = Column(String)  # pending, approved, rejected, cancelled
 
@@ -1302,7 +1304,7 @@ class PaymentResponse(BaseModel):
     model_config = {"from_attributes": True}
 
     transaction_id: int
-    mp_payment_id: Optional[str]
+    payment_id: Optional[str]
     mp_preference_id: Optional[str]
     init_point: Optional[str]  # URL para redirecionar usuário no MP
     status: str
@@ -1318,7 +1320,7 @@ class TransactionResponse(BaseModel):
     product_id: int
     buyer_id: int
     seller_id: int
-    mp_payment_id: Optional[str]
+    payment_id: Optional[str]
     mp_status: Optional[str]
     status: str
     amount: float
@@ -2235,9 +2237,9 @@ async def mercadopago_webhook(request: dict, db: Session = Depends(get_db)):
             payment = payment_info["response"]
 
             # Buscar transação pelo external_reference ou payment_id
-            mp_payment_id = str(payment["id"])
+            payment_id = str(payment["id"])
             transaction = db.query(Transaction).filter(
-                Transaction.mp_payment_id == mp_payment_id
+                Transaction.payment_id == payment_id
             ).first()
 
             if transaction:
@@ -2245,7 +2247,7 @@ async def mercadopago_webhook(request: dict, db: Session = Depends(get_db)):
                 old_status = transaction.mp_status
                 new_status = payment["status"]
 
-                transaction.mp_payment_id = mp_payment_id
+                transaction.payment_id = payment_id
                 transaction.mp_status = new_status
 
                 # Se foi aprovado, mudar status para 'paid'
