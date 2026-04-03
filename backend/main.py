@@ -615,13 +615,13 @@ def health_check():
 
 @app.post("/products/analyze", response_model=PriceAnalysisResponse)
 async def analyze_product(
-    title: str,
-    category: str,
-    console_type: str,
-    is_working: bool = True,
-    is_complete: bool = False,
-    has_box: bool = False,
-    has_manual: bool = False,
+    title: str = Form(...),
+    category: str = Form(...),
+    console_type: str = Form(...),
+    is_working: bool = Form(True),
+    is_complete: bool = Form(False),
+    has_box: bool = Form(False),
+    has_manual: bool = Form(False),
     images: List[UploadFile] = File(...),
     current_user: User = Depends(get_current_user),
 ):

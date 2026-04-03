@@ -298,5 +298,79 @@ export const payment = {
   },
 };
 
+// Maintenance Assistant API
+export const maintenance = {
+  start: async (console = null) => {
+    try {
+      console.log('🛠️ [MAINTENANCE] Iniciando sessão...', console);
+      const response = await apiClient.post('/maintenance/start',
+        console ? { console } : {},
+        { timeout: 30000 }
+      );
+      console.log('✅ [MAINTENANCE] Sessão iniciada:', response.status);
+      return response.data;
+    } catch (error) {
+      console.error('❌ [MAINTENANCE START] Erro:', error.message);
+      console.error('❌ [MAINTENANCE START] Response:', error.response?.data);
+      throw error;
+    }
+  },
+
+  chat: async (message, images = []) => {
+    try {
+      console.log('💬 [MAINTENANCE CHAT] Enviando:', message, `${images.length} imagens`);
+
+      const formData = new FormData();
+      formData.append('message', message);
+
+      // Add images if provided
+      if (images && images.length > 0) {
+        for (let i = 0; i < images.length; i++) {
+          const uri = images[i];
+          const filename = uri.split('/').pop();
+          const match = /\.(\w+)$/.exec(filename);
+          const type = match ? `image/${match[1]}` : 'image/jpeg';
+
+          formData.append('images', {
+            uri,
+            name: filename,
+            type,
+          });
+        }
+      }
+
+      const response = await apiClient.post('/maintenance/chat', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        timeout: 60000,
+      });
+
+      console.log('✅ [MAINTENANCE CHAT] Resposta:', response.status);
+      return response.data;
+    } catch (error) {
+      console.error('❌ [MAINTENANCE CHAT] Erro:', error.message);
+      console.error('❌ [MAINTENANCE CHAT] Status:', error.response?.status);
+      console.error('❌ [MAINTENANCE CHAT] Data:', error.response?.data);
+      throw error;
+    }
+  },
+
+  tips: async (console) => {
+    try {
+      console.log('💡 [MAINTENANCE TIPS] Buscando dicas para:', console);
+      const response = await apiClient.get(`/maintenance/tips/${encodeURIComponent(console)}`, {
+        timeout: 30000,
+      });
+      console.log('✅ [MAINTENANCE TIPS] Dicas recebidas:', response.status);
+      return response.data;
+    } catch (error) {
+      console.error('❌ [MAINTENANCE TIPS] Erro:', error.message);
+      console.error('❌ [MAINTENANCE TIPS] Response:', error.response?.data);
+      throw error;
+    }
+  },
+};
+
 export const api = apiClient;
 export default apiClient;

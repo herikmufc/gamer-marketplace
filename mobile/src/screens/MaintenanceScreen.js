@@ -15,7 +15,7 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../theme/colors';
-import { api } from '../api/client';
+import { api, maintenance } from '../api/client';
 
 export default function MaintenanceScreen() {
   const [messages, setMessages] = useState([]);
@@ -31,18 +31,19 @@ export default function MaintenanceScreen() {
   const startSession = async () => {
     try {
       setLoading(true);
-      const response = await api.post('/maintenance/start');
+      const response = await maintenance.start();
 
-      if (response.data.success) {
+      if (response.success) {
         setMessages([{
           id: Date.now(),
-          text: response.data.greeting,
+          text: response.greeting,
           isBot: true,
           timestamp: new Date(),
         }]);
       }
     } catch (error) {
       console.error('Erro ao iniciar sessão:', error);
+      console.error('Detalhes:', error.response?.data);
       setMessages([{
         id: Date.now(),
         text: '👋 Olá! Sou seu assistente de manutenção de consoles retro. Me conte qual é o problema!',
@@ -116,46 +117,36 @@ export default function MaintenanceScreen() {
     setLoading(true);
 
     try {
-      const formData = new FormData();
-      formData.append('message', inputText || 'Analise estas imagens');
+      const response = await maintenance.chat(
+        inputText || 'Analise estas imagens',
+        imagesToSend
+      );
 
-      // Add images to form data
-      if (imagesToSend.length > 0) {
-        for (let i = 0; i < imagesToSend.length; i++) {
-          const uri = imagesToSend[i];
-          const filename = uri.split('/').pop();
-          const match = /\.(\w+)$/.exec(filename);
-          const type = match ? `image/${match[1]}` : 'image/jpeg';
-
-          formData.append('images', {
-            uri,
-            name: filename,
-            type,
-          });
-        }
-      }
-
-      const response = await api.post('/maintenance/chat', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        timeout: 60000,
-      });
-
-      if (response.data.success) {
+      if (response.success) {
         const botMessage = {
           id: Date.now() + 1,
-          text: response.data.response,
+          text: response.response,
           isBot: true,
           timestamp: new Date(),
         };
         setMessages(prev => [...prev, botMessage]);
       }
     } catch (error) {
-      console.error('Erro ao enviar mensagem:', error);
+      console.error('❌ Erro ao enviar mensagem:', error);
+      console.error('❌ Status:', error.response?.status);
+      console.error('❌ Data:', error.response?.data);
+
+      let errorText = '❌ Desculpe, ocorreu um erro. Tente novamente.';
+
+      if (error.response?.status === 401) {
+        errorText = '🔐 Sessão expirada. Faça login novamente.';
+      } else if (error.response?.data?.detail) {
+        errorText = `❌ ${error.response.data.detail}`;
+      }
+
       const errorMessage = {
         id: Date.now() + 1,
-        text: '❌ Desculpe, ocorreu um erro. Tente novamente.',
+        text: errorText,
         isBot: true,
         timestamp: new Date(),
       };
