@@ -1063,7 +1063,25 @@ async def identify_game_by_photo(
             json_end = ai_response.rfind('}') + 1
             if json_start != -1 and json_end > json_start:
                 json_str = ai_response[json_start:json_end]
-                game_data = json.loads(json_str)
+                gemini_data = json.loads(json_str)
+
+                # Mapear resposta do Gemini para formato esperado pelo app
+                game_data = {
+                    "game_name": gemini_data.get("nome", "Não identificado"),
+                    "console": gemini_data.get("console", "Desconhecido"),
+                    "region": gemini_data.get("regiao", "Não especificada"),
+                    "version": gemini_data.get("ano", "N/A"),
+                    "condition_score": 7 if gemini_data.get("estado") == "Bom" else 5,
+                    "has_box": "caixa" in str(gemini_data.get("itens", [])).lower(),
+                    "has_manual": "manual" in str(gemini_data.get("itens", [])).lower(),
+                    "has_extras": gemini_data.get("itens", []),
+                    "rarity": "Comum" if gemini_data.get("confianca", 0) > 80 else "Raro",
+                    "estimated_price": f"R$ {gemini_data.get('valor_min', 0):.2f} - R$ {gemini_data.get('valor_max', 0):.2f}",
+                    "authenticity_score": gemini_data.get("confianca", 50),
+                    "authenticity_notes": gemini_data.get("observacoes", ""),
+                    "market_analysis": gemini_data.get("observacoes", "Análise completa da IA"),
+                    "confidence": gemini_data.get("confianca", 50)
+                }
 
                 return {
                     "success": True,
