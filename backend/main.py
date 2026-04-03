@@ -2,7 +2,7 @@
 API Estendida com Chat, Fórum, CPF e Termos Legais
 Execute este arquivo em vez de main.py
 """
-from fastapi import FastAPI, File, UploadFile, Depends, HTTPException, status, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, File, UploadFile, Depends, HTTPException, status, WebSocket, WebSocketDisconnect, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, Text, Boolean, ForeignKey, or_, desc
@@ -2428,8 +2428,8 @@ async def manually_run_auto_release(current_user: User = Depends(get_current_use
 
 @app.post("/maintenance/chat")
 async def maintenance_chat(
-    message: str,
-    console: Optional[str] = None,
+    message: str = Form(...),
+    console: Optional[str] = Form(None),
     images: Optional[List[UploadFile]] = File(None),
     current_user: User = Depends(get_current_user)
 ):
