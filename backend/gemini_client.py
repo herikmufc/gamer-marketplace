@@ -6,6 +6,10 @@ import os
 import base64
 from typing import Optional, List, Dict, Any
 import google.generativeai as genai
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Configure Gemini API
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
@@ -31,8 +35,8 @@ def identify_game_from_image(image_data: bytes, image_format: str = "jpeg") -> D
     if not GEMINI_API_KEY:
         raise Exception("GEMINI_API_KEY não configurada")
 
-    # Use Gemini 1.5 Flash (fastest and free)
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    # Use Gemini 2.5 Flash (latest, fastest)
+    model = genai.GenerativeModel('models/gemini-2.5-flash')
 
     prompt = """Você é um especialista em jogos retro (Atari, NES, SNES, Mega Drive, PlayStation 1/2, Nintendo 64, etc).
 
@@ -90,7 +94,7 @@ def analyze_product_content(title: str, description: str, category: str) -> Dict
     if not GEMINI_API_KEY:
         raise Exception("GEMINI_API_KEY não configurada")
 
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel('models/gemini-2.5-flash')
 
     prompt = f"""Você é um moderador de conteúdo para um marketplace de jogos retro.
 
@@ -138,7 +142,7 @@ def discover_retro_gaming_events(state: str, city: Optional[str] = None) -> Dict
     if not GEMINI_API_KEY:
         raise Exception("GEMINI_API_KEY não configurada")
 
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel('models/gemini-2.5-flash')
 
     location = f"{city}, {state}" if city else state
 
@@ -200,7 +204,7 @@ def analyze_verification_video(
     if not GEMINI_API_KEY:
         raise Exception("GEMINI_API_KEY não configurada")
 
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel('models/gemini-2.5-flash')
 
     prompt = f"""Você é um verificador de autenticidade de produtos em marketplaces.
 
@@ -268,7 +272,7 @@ def moderate_chat_message(message: str, room_context: str = "") -> Dict[str, Any
     if not GEMINI_API_KEY:
         raise Exception("GEMINI_API_KEY não configurada")
 
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel('models/gemini-2.5-flash')
 
     prompt = f"""Você é um moderador de chat para um marketplace de jogos retro.
 

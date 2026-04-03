@@ -6,6 +6,10 @@ import os
 import base64
 from typing import List, Dict, Any, Optional
 import google.generativeai as genai
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
@@ -19,7 +23,7 @@ class MaintenanceAssistant:
     """
 
     def __init__(self):
-        self.model = genai.GenerativeModel('gemini-1.5-flash')
+        self.model = genai.GenerativeModel('models/gemini-2.5-flash')
         self.conversation_history = []
         self.system_prompt = """Você é um técnico especialista em manutenção e reparo de consoles retro com 25 anos de experiência.
 
