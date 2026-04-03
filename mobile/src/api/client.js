@@ -126,10 +126,29 @@ export const products = {
   },
 
   analyze: async (formData) => {
-    const response = await apiClient.post('/products/analyze', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
-    return response.data;
+    try {
+      console.log('📊 [ANALYZE] Iniciando análise de preço...');
+
+      const response = await apiClient.post('/products/analyze', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 60000,
+      });
+
+      console.log('✅ [ANALYZE] Resposta recebida:', response.status);
+      console.log('✅ [ANALYZE] Data:', JSON.stringify(response.data, null, 2));
+
+      if (response.status === 200) {
+        return response.data;
+      } else {
+        console.error('❌ [ANALYZE] Status não-200:', response.status);
+        throw new Error(response.data?.detail || 'Erro ao analisar produto');
+      }
+    } catch (error) {
+      console.error('❌ [ANALYZE] Erro completo:', error);
+      console.error('❌ [ANALYZE] Response:', error.response?.data);
+      console.error('❌ [ANALYZE] Status:', error.response?.status);
+      throw error;
+    }
   },
 
   create: async (formData) => {

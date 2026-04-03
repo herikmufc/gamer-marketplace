@@ -65,15 +65,25 @@ export default function CreateProductScreen({ navigation }) {
 
     try {
       setAnalyzing(true);
+      console.log('🔍 Iniciando análise de preço...');
 
       const formDataObj = new FormData();
       formDataObj.append('title', formData.title);
       formDataObj.append('category', formData.category);
       formDataObj.append('console_type', formData.console_type);
-      formDataObj.append('is_working', formData.is_working);
-      formDataObj.append('is_complete', formData.is_complete);
-      formDataObj.append('has_box', formData.has_box);
-      formDataObj.append('has_manual', formData.has_manual);
+
+      // Converter booleans para strings (FormData issue)
+      formDataObj.append('is_working', String(formData.is_working));
+      formDataObj.append('is_complete', String(formData.is_complete));
+      formDataObj.append('has_box', String(formData.has_box));
+      formDataObj.append('has_manual', String(formData.has_manual));
+
+      console.log('📤 Dados enviados:', {
+        title: formData.title,
+        console_type: formData.console_type,
+        is_working: formData.is_working,
+        images: images.length
+      });
 
       images.forEach((image, index) => {
         formDataObj.append('images', {
@@ -83,23 +93,43 @@ export default function CreateProductScreen({ navigation }) {
         });
       });
 
+      console.log('📡 Enviando para API...');
       const analysis = await products.analyze(formDataObj);
+
+      console.log('✅ Análise recebida:', analysis);
+
+      // Verificar se a resposta tem a estrutura esperada
+      if (!analysis || !analysis.price_suggestion) {
+        throw new Error('Resposta da API em formato inválido');
+      }
+
       setAiSuggestion(analysis);
 
       // Preencher preço automaticamente com a sugestão da IA
+      const idealPrice = Number(analysis.price_suggestion.ideal);
+      if (isNaN(idealPrice)) {
+        throw new Error('Preço sugerido inválido');
+      }
+
       setFormData(prev => ({
         ...prev,
-        price: analysis.price_suggestion.ideal.toFixed(2)
+        price: idealPrice.toFixed(2)
       }));
 
       Alert.alert(
         '💡 Sugestão da IA',
-        `Preço sugerido: R$ ${analysis.price_suggestion.ideal.toFixed(2)}\n\nFaixa: R$ ${analysis.price_suggestion.min.toFixed(2)} - R$ ${analysis.price_suggestion.max.toFixed(2)}\n\nCondição: ${analysis.condition_score.toFixed(0)}/100\nRaridade: ${analysis.rarity_score.toFixed(0)}/100\n\nVocê pode ajustar o preço manualmente se preferir.`,
+        `Preço sugerido: R$ ${idealPrice.toFixed(2)}\n\nFaixa: R$ ${Number(analysis.price_suggestion.min).toFixed(2)} - R$ ${Number(analysis.price_suggestion.max).toFixed(2)}\n\nCondição: ${Number(analysis.condition_score).toFixed(0)}/100\nRaridade: ${Number(analysis.rarity_score).toFixed(0)}/100\n\nVocê pode ajustar o preço manualmente se preferir.`,
         [{ text: 'OK' }]
       );
     } catch (error) {
-      Alert.alert('Erro', 'Falha ao analisar produto. Você pode definir o preço manualmente.');
-      console.error(error);
+      console.error('❌ ERRO NA ANÁLISE:', error);
+      console.error('❌ Detalhes:', error.response?.data);
+
+      const errorMsg = error.response?.data?.detail ||
+                       error.message ||
+                       'Falha ao analisar produto. Você pode definir o preço manualmente.';
+
+      Alert.alert('Erro na Análise', errorMsg);
     } finally {
       setAnalyzing(false);
     }
