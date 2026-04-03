@@ -111,8 +111,15 @@ export const auth = {
 // Products API
 export const products = {
   list: async (params = {}) => {
-    const response = await apiClient.get('/products', { params });
-    return response.data;
+    try {
+      console.log('📡 [LIST] Buscando produtos...', params);
+      const response = await apiClient.get('/products', { params });
+      console.log('✅ [LIST] Produtos retornados:', response.data?.length || 0);
+      return response.data;
+    } catch (error) {
+      console.error('❌ [LIST] Erro:', error.message);
+      throw error;
+    }
   },
 
   get: async (id) => {
@@ -152,10 +159,20 @@ export const products = {
   },
 
   create: async (formData) => {
-    const response = await apiClient.post('/products', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
-    return response.data;
+    try {
+      console.log('📤 [CREATE] Criando produto...');
+      const response = await apiClient.post('/products', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 60000,
+      });
+      console.log('✅ [CREATE] Produto criado:', response.status);
+      console.log('✅ [CREATE] Produto ID:', response.data?.id);
+      return response.data;
+    } catch (error) {
+      console.error('❌ [CREATE] Erro ao criar produto:', error);
+      console.error('❌ [CREATE] Response:', error.response?.data);
+      throw error;
+    }
   },
 
   identifyGame: async (imageUri) => {

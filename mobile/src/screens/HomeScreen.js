@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { products } from '../api/client';
 import { colors } from '../theme/colors';
 import RetroCard from '../components/RetroCard';
@@ -32,16 +33,25 @@ export default function HomeScreen({ navigation }) {
     loadProducts();
   }, [selectedCategory]);
 
+  // Reload products when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      loadProducts();
+    }, [selectedCategory])
+  );
+
   const loadProducts = async () => {
     try {
       setLoading(true);
       const params = selectedCategory && selectedCategory !== 'all'
         ? { category: selectedCategory }
         : {};
+      console.log('📡 [HOME] Carregando produtos com filtros:', params);
       const data = await products.list(params);
+      console.log('✅ [HOME] Produtos recebidos:', data?.length || 0);
       setProductList(data);
     } catch (error) {
-      console.error('Error loading products:', error);
+      console.error('❌ [HOME] Erro ao carregar produtos:', error);
     } finally {
       setLoading(false);
     }

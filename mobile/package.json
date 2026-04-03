@@ -28,6 +28,7 @@
   },
   "private": true,
   "devDependencies": {
-    "@expo/config-plugins": "~54.0.4"
+    "@expo/config-plugins": "~54.0.4",
+    "eas-cli": "^18.4.0"
   }
 }
