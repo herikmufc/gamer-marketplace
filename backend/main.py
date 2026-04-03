@@ -16,6 +16,7 @@ from jose import JWTError, jwt
 import mercadopago
 import gemini_client
 from maintenance_assistant import maintenance_assistant
+import supabase_client
 import os
 import base64
 import re
@@ -711,13 +712,7 @@ async def create_product(
     """Create a new product listing"""
 
     try:
-        # Save images to Supabase Storage (simplified for now)
-        image_urls = []
-        for idx, image_file in enumerate(images):
-            # For now, just store a placeholder
-            # In production, upload to Supabase Storage
-            image_urls.append(f"product_{current_user.id}_{datetime.utcnow().timestamp()}_{idx}.jpg")
-
+        # Create product first to get product_id
         product = Product(
             title=title,
             description=description,
@@ -733,7 +728,7 @@ async def create_product(
             is_complete=is_complete,
             has_box=has_box,
             has_manual=has_manual,
-            images=json.dumps(image_urls),
+            images=json.dumps([]),  # Empty array initially
             owner_id=current_user.id
         )
 
@@ -741,6 +736,38 @@ async def create_product(
         db.commit()
         db.refresh(product)
 
+        # Upload images to Supabase Storage
+        image_urls = []
+        print(f"📤 Uploading {len(images)} images for product {product.id}...")
+
+        for idx, image_file in enumerate(images):
+            try:
+                # Read file content
+                content = await image_file.read()
+                file_obj = BytesIO(content)
+
+                # Upload to Supabase
+                public_url = supabase_client.upload_product_image(
+                    user_id=current_user.id,
+                    product_id=product.id,
+                    file=file_obj,
+                    filename=image_file.filename or f"image_{idx}.jpg",
+                    content_type=image_file.content_type or "image/jpeg"
+                )
+
+                image_urls.append(public_url)
+                print(f"✅ Image {idx + 1}/{len(images)} uploaded: {public_url}")
+
+            except Exception as upload_error:
+                print(f"⚠️ Error uploading image {idx}: {upload_error}")
+                # Continue with other images even if one fails
+
+        # Update product with image URLs
+        product.images = json.dumps(image_urls)
+        db.commit()
+        db.refresh(product)
+
+        print(f"✅ Product {product.id} created with {len(image_urls)} images")
         return product
 
     except Exception as e:

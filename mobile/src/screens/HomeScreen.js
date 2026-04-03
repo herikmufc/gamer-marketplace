@@ -8,6 +8,7 @@ import {
   TextInput,
   ActivityIndicator,
   RefreshControl,
+  Image,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { products } from '../api/client';
@@ -80,45 +81,67 @@ export default function HomeScreen({ navigation }) {
     setRefreshing(false);
   };
 
-  const renderProduct = ({ item }) => (
-    <TouchableOpacity
-      onPress={() => navigation.navigate('ProductDetail', { productId: item.id })}
-    >
-      <RetroCard style={styles.productCard}>
-        <View style={styles.productImage}>
-          <Text style={styles.productImagePlaceholder}>🎮</Text>
-        </View>
+  const renderProduct = ({ item }) => {
+    // Parse images from JSON string
+    let imageUrls = [];
+    try {
+      if (item.images) {
+        imageUrls = JSON.parse(item.images);
+      }
+    } catch (e) {
+      console.warn('Failed to parse product images:', e);
+    }
 
-        <View style={styles.productInfo}>
-          <Text style={styles.productTitle} numberOfLines={2}>
-            {item.title}
-          </Text>
-          <Text style={styles.productConsole}>{item.console_type}</Text>
+    const firstImage = imageUrls.length > 0 ? imageUrls[0] : null;
 
-          <View style={styles.productMeta}>
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>
-                ⭐ {item.condition_score?.toFixed(0) || 70}/100
-              </Text>
-            </View>
-            {item.is_working && (
-              <View style={[styles.badge, styles.badgeSuccess]}>
-                <Text style={styles.badgeText}>✓ Funciona</Text>
-              </View>
+    return (
+      <TouchableOpacity
+        onPress={() => navigation.navigate('ProductDetail', { productId: item.id })}
+      >
+        <RetroCard style={styles.productCard}>
+          <View style={styles.productImage}>
+            {firstImage ? (
+              <Image
+                source={{ uri: firstImage }}
+                style={styles.productImageActual}
+                resizeMode="cover"
+              />
+            ) : (
+              <Text style={styles.productImagePlaceholder}>🎮</Text>
             )}
           </View>
 
-          <Text style={styles.productPrice}>
-            R$ {item.final_price?.toFixed(2) || '0.00'}
-          </Text>
+          <View style={styles.productInfo}>
+            <Text style={styles.productTitle} numberOfLines={2}>
+              {item.title}
+            </Text>
+            <Text style={styles.productConsole}>{item.console_type}</Text>
 
-          <Text style={styles.productSeller}>
-            👤 {item.owner?.username}
-          </Text>
-        </View>
-      </RetroCard>
-    </TouchableOpacity>
-  );
+            <View style={styles.productMeta}>
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>
+                  ⭐ {item.condition_score?.toFixed(0) || 70}/100
+                </Text>
+              </View>
+              {item.is_working && (
+                <View style={[styles.badge, styles.badgeSuccess]}>
+                  <Text style={styles.badgeText}>✓ Funciona</Text>
+                </View>
+              )}
+            </View>
+
+            <Text style={styles.productPrice}>
+              R$ {item.final_price?.toFixed(2) || '0.00'}
+            </Text>
+
+            <Text style={styles.productSeller}>
+              👤 {item.owner?.username}
+            </Text>
+          </View>
+        </RetroCard>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -388,6 +411,11 @@ const styles = StyleSheet.create({
     marginRight: 12,
     borderWidth: 2,
     borderColor: colors.yellow.primary,
+    overflow: 'hidden',
+  },
+  productImageActual: {
+    width: '100%',
+    height: '100%',
   },
   productImagePlaceholder: {
     fontSize: 36,
