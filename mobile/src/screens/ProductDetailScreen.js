@@ -282,6 +282,17 @@ export default function ProductDetailScreen({ route, navigation }) {
         </View>
       </ScrollView>
 
+      {/* DEBUG PANEL - REMOVER DEPOIS */}
+      <View style={styles.debugPanel}>
+        <Text style={styles.debugTitle}>🔍 DEBUG INFO:</Text>
+        <Text style={styles.debugText}>Você está logado? {user ? '✅ SIM' : '❌ NÃO'}</Text>
+        <Text style={styles.debugText}>Seu username: {user?.username || 'N/A'}</Text>
+        <Text style={styles.debugText}>Dono do produto: {product?.owner?.username || 'N/A'}</Text>
+        <Text style={styles.debugText}>Produto vendido? {product?.is_sold ? '✅ SIM' : '❌ NÃO'}</Text>
+        <Text style={styles.debugText}>É seu produto? {user && product ? (user.username === product.owner.username ? '✅ SIM' : '❌ NÃO') : 'N/A'}</Text>
+        <Text style={styles.debugText}>Pode comprar? {canBuyProduct() ? '✅ SIM' : '❌ NÃO'}</Text>
+      </View>
+
       {/* Footer - Action Buttons */}
       <View style={styles.footer}>
         <RetroButton
@@ -531,5 +542,25 @@ const styles = StyleSheet.create({
   },
   contactButton: {
     flex: 1,
+  },
+  debugPanel: {
+    backgroundColor: '#ff6b6b',
+    padding: 16,
+    margin: 16,
+    borderRadius: 8,
+    borderWidth: 3,
+    borderColor: '#fff',
+  },
+  debugTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 8,
+  },
+  debugText: {
+    fontSize: 13,
+    color: '#fff',
+    marginBottom: 4,
+    fontFamily: 'monospace',
   },
 });
