@@ -45,13 +45,18 @@ export default function ProductDetailScreen({ route, navigation }) {
   };
 
   const handleContact = () => {
+    console.log('💬 [CHAT] Abrindo chat com:', product.owner.username);
+
+    // TODO: Implementar navegação para chat individual
+    // Por enquanto, navega para lista de chats
+    navigation.navigate('Main', {
+      screen: 'ChatTab'
+    });
+
     Alert.alert(
-      'Contatar Vendedor',
-      `Entre em contato com ${product.owner.username}`,
-      [
-        { text: 'Chat' },
-        { text: 'Cancelar', style: 'cancel' },
-      ]
+      'Chat',
+      `Funcionalidade de chat individual em desenvolvimento. Por enquanto, veja suas conversas na aba Chat.`,
+      [{ text: 'OK' }]
     );
   };
 
@@ -85,10 +90,33 @@ export default function ProductDetailScreen({ route, navigation }) {
 
   // Check if user can buy this product
   const canBuyProduct = () => {
-    if (!user) return false;
-    if (!product) return false;
-    if (product.is_sold) return false;
-    if (user.username === product.owner.username) return false;
+    console.log('🔍 [CAN_BUY] Verificando se pode comprar:', {
+      hasUser: !!user,
+      username: user?.username,
+      hasProduct: !!product,
+      productOwner: product?.owner?.username,
+      isSold: product?.is_sold,
+      isOwnProduct: user && product ? user.username === product.owner.username : 'N/A'
+    });
+
+    if (!user) {
+      console.log('❌ [CAN_BUY] Usuário não está logado');
+      return false;
+    }
+    if (!product) {
+      console.log('❌ [CAN_BUY] Produto não carregado');
+      return false;
+    }
+    if (product.is_sold) {
+      console.log('❌ [CAN_BUY] Produto já vendido');
+      return false;
+    }
+    if (user.username === product.owner.username) {
+      console.log('❌ [CAN_BUY] É seu próprio produto');
+      return false;
+    }
+
+    console.log('✅ [CAN_BUY] Pode comprar!');
     return true;
   };
 
