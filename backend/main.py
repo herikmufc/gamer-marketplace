@@ -536,55 +536,97 @@ def root():
 
 @app.post("/register", response_model=UserResponse)
 def register(user: UserCreate, db: Session = Depends(get_db)):
-    # Validar CPF
-    if not validate_cpf(user.cpf):
-        raise HTTPException(status_code=400, detail="CPF inválido")
+    try:
+        print(f"📝 [REGISTER] Tentativa de registro: {user.username}")
 
-    # Verificar se CPF já existe
-    if db.query(User).filter(User.cpf == user.cpf).first():
-        raise HTTPException(status_code=400, detail="CPF já cadastrado")
+        # Validar CPF
+        if not validate_cpf(user.cpf):
+            print(f"❌ [REGISTER] CPF inválido: {user.cpf}")
+            raise HTTPException(status_code=400, detail="CPF inválido")
 
-    # Verificar email/username
-    if db.query(User).filter(User.email == user.email).first():
-        raise HTTPException(status_code=400, detail="Email já cadastrado")
-    if db.query(User).filter(User.username == user.username).first():
-        raise HTTPException(status_code=400, detail="Username já cadastrado")
+        # Verificar se CPF já existe
+        if db.query(User).filter(User.cpf == user.cpf).first():
+            print(f"❌ [REGISTER] CPF já cadastrado: {user.cpf}")
+            raise HTTPException(status_code=400, detail="CPF já cadastrado")
 
-    # Criar usuário
-    db_user = User(
-        email=user.email,
-        username=user.username,
-        cpf=user.cpf,
-        phone=user.phone,
-        hashed_password=get_password_hash(user.password),
-        full_name=user.full_name,
-        terms_accepted_at=datetime.utcnow(),  # Aceite de termos
-        terms_version="1.0.0"
-    )
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
+        # Verificar email/username
+        if db.query(User).filter(User.email == user.email).first():
+            print(f"❌ [REGISTER] Email já cadastrado: {user.email}")
+            raise HTTPException(status_code=400, detail="Email já cadastrado")
+        if db.query(User).filter(User.username == user.username).first():
+            print(f"❌ [REGISTER] Username já cadastrado: {user.username}")
+            raise HTTPException(status_code=400, detail="Username já cadastrado")
 
-    # Mascarar CPF na resposta
-    response = UserResponse.model_validate(db_user)
-    response.cpf = mask_cpf(db_user.cpf)
-    return response
+        # Criar usuário
+        db_user = User(
+            email=user.email,
+            username=user.username,
+            cpf=user.cpf,
+            phone=user.phone,
+            hashed_password=get_password_hash(user.password),
+            full_name=user.full_name,
+            terms_accepted_at=datetime.utcnow(),  # Aceite de termos
+            terms_version="1.0.0"
+        )
+        db.add(db_user)
+        db.commit()
+        db.refresh(db_user)
+
+        print(f"✅ [REGISTER] Usuário criado com sucesso: {db_user.username} (ID: {db_user.id})")
+
+        # Mascarar CPF na resposta
+        response = UserResponse.model_validate(db_user)
+        response.cpf = mask_cpf(db_user.cpf)
+        return response
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ [REGISTER] Erro inesperado: {str(e)}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Erro ao criar usuário: {str(e)}")
 
 @app.post("/token")
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.username == form_data.username).first()
-    if not user or not verify_password(form_data.password, user.hashed_password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Usuário ou senha incorretos",
-            headers={"WWW-Authenticate": "Bearer"},
+    try:
+        print(f"🔐 [LOGIN] Tentativa de login: {form_data.username}")
+
+        user = db.query(User).filter(User.username == form_data.username).first()
+
+        if not user:
+            print(f"❌ [LOGIN] Usuário não encontrado: {form_data.username}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Usuário ou senha incorretos",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        if not verify_password(form_data.password, user.hashed_password):
+            print(f"❌ [LOGIN] Senha incorreta para: {form_data.username}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Usuário ou senha incorretos",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={"sub": user.username}, expires_delta=access_token_expires
         )
 
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
-    )
-    return {"access_token": access_token, "token_type": "bearer"}
+        print(f"✅ [LOGIN] Login bem-sucedido: {user.username}")
+        print(f"✅ [LOGIN] Token gerado: {access_token[:20]}...")
+
+        return {"access_token": access_token, "token_type": "bearer"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ [LOGIN] Erro inesperado: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Erro interno no servidor"
+        )
 
 @app.get("/me", response_model=UserResponse)
 async def get_me(current_user: User = Depends(get_current_user)):

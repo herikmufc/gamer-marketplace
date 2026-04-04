@@ -47,8 +47,25 @@ apiClient.interceptors.response.use(
 // Auth API
 export const auth = {
   register: async (userData) => {
-    const response = await apiClient.post('/register', userData);
-    return response.data;
+    try {
+      console.log('📝 [REGISTER] Iniciando registro...', {
+        username: userData.username,
+        email: userData.email,
+        full_name: userData.full_name,
+      });
+
+      const response = await apiClient.post('/register', userData);
+
+      console.log('✅ [REGISTER] Registro bem-sucedido:', response.status);
+      console.log('✅ [REGISTER] Usuário criado:', response.data?.username);
+
+      return response.data;
+    } catch (error) {
+      console.error('❌ [REGISTER] Erro ao registrar:', error.message);
+      console.error('❌ [REGISTER] Status:', error.response?.status);
+      console.error('❌ [REGISTER] Data:', error.response?.data);
+      throw error;
+    }
   },
 
   login: async (username, password) => {
