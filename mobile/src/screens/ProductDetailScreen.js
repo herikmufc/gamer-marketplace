@@ -27,13 +27,25 @@ export default function ProductDetailScreen({ route, navigation }) {
   const loadProduct = async () => {
     try {
       console.log('📦 [PRODUCT DETAIL] Carregando produto:', productId);
+      console.log('📦 [PRODUCT DETAIL] Usuário logado:', user?.username || 'NÃO LOGADO');
+
       const data = await products.get(productId);
+
       console.log('✅ [PRODUCT DETAIL] Produto carregado:', {
         id: data.id,
         title: data.title,
         is_sold: data.is_sold,
-        owner: data.owner?.username
+        owner: data.owner?.username,
+        ownerEmail: data.owner?.email
       });
+
+      console.log('📦 [PRODUCT DETAIL] Comparação de usuários:', {
+        currentUser: user?.username,
+        currentUserEmail: user?.email,
+        productOwner: data.owner?.username,
+        areEqual: user?.username === data.owner?.username
+      });
+
       setProduct(data);
     } catch (error) {
       console.error('❌ [PRODUCT DETAIL] Erro:', error);
