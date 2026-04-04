@@ -390,6 +390,7 @@ class ProductResponse(BaseModel):
     owner: UserResponse
     created_at: datetime
     is_sold: bool
+    views_count: int = 0
 
 class PriceAnalysisResponse(BaseModel):
     condition_score: float
@@ -460,9 +461,13 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
         raise credentials_exception
     return user
 
-def mask_cpf(cpf: str) -> str:
+def mask_cpf(cpf: Optional[str]) -> str:
     """Mascara CPF: 123.456.789-**"""
+    if not cpf:
+        return "***.***.***-**"
     cpf_clean = re.sub(r'\D', '', cpf)
+    if len(cpf_clean) < 11:
+        return "***.***.***-**"
     return f"{cpf_clean[:3]}.{cpf_clean[3:6]}.{cpf_clean[6:9]}-**"
 
 # ============================================

@@ -102,38 +102,20 @@ export default function ProductDetailScreen({ route, navigation }) {
 
   // Check if user can buy this product
   const canBuyProduct = () => {
-    console.log('🔍 [CAN_BUY] Verificando se pode comprar:', {
-      hasUser: !!user,
-      username: user?.username,
-      hasProduct: !!product,
-      productOwner: product?.owner?.username,
-      isSold: product?.is_sold,
-      isOwnProduct: user && product ? user.username === product.owner.username : 'N/A'
-    });
-
-    if (!user) {
-      console.log('❌ [CAN_BUY] Usuário não está logado');
-      return false;
-    }
-    if (!product) {
-      console.log('❌ [CAN_BUY] Produto não carregado');
-      return false;
-    }
-    if (product.is_sold) {
-      console.log('❌ [CAN_BUY] Produto já vendido');
-      return false;
-    }
-    if (user.username === product.owner.username) {
-      console.log('❌ [CAN_BUY] É seu próprio produto');
-      return false;
-    }
-
-    console.log('✅ [CAN_BUY] Pode comprar!');
+    // ALWAYS check product exists first
+    if (!product) return false;
+    if (!user) return false;
+    if (product.is_sold) return false;
+    if (!product.owner) return false;
+    if (user.username === product.owner.username) return false;
     return true;
   };
 
   const getBuyButtonText = () => {
+    // ALWAYS check product exists first
+    if (!product) return 'Carregando...';
     if (!user) return 'Fazer Login para Comprar';
+    if (!product.owner) return 'Carregando...';
     if (user.username === product.owner.username) return 'Seu Produto';
     if (product.is_sold) return 'Produto Vendido';
     return 'Comprar';
@@ -281,17 +263,6 @@ export default function ProductDetailScreen({ route, navigation }) {
           </View>
         </View>
       </ScrollView>
-
-      {/* DEBUG PANEL - REMOVER DEPOIS */}
-      <View style={styles.debugPanel}>
-        <Text style={styles.debugTitle}>🔍 DEBUG INFO:</Text>
-        <Text style={styles.debugText}>Você está logado? {user ? '✅ SIM' : '❌ NÃO'}</Text>
-        <Text style={styles.debugText}>Seu username: {user?.username || 'N/A'}</Text>
-        <Text style={styles.debugText}>Dono do produto: {product?.owner?.username || 'N/A'}</Text>
-        <Text style={styles.debugText}>Produto vendido? {product?.is_sold ? '✅ SIM' : '❌ NÃO'}</Text>
-        <Text style={styles.debugText}>É seu produto? {user && product ? (user.username === product.owner.username ? '✅ SIM' : '❌ NÃO') : 'N/A'}</Text>
-        <Text style={styles.debugText}>Pode comprar? {canBuyProduct() ? '✅ SIM' : '❌ NÃO'}</Text>
-      </View>
 
       {/* Footer - Action Buttons */}
       <View style={styles.footer}>
@@ -542,25 +513,5 @@ const styles = StyleSheet.create({
   },
   contactButton: {
     flex: 1,
-  },
-  debugPanel: {
-    backgroundColor: '#ff6b6b',
-    padding: 16,
-    margin: 16,
-    borderRadius: 8,
-    borderWidth: 3,
-    borderColor: '#fff',
-  },
-  debugTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 8,
-  },
-  debugText: {
-    fontSize: 13,
-    color: '#fff',
-    marginBottom: 4,
-    fontFamily: 'monospace',
   },
 });
