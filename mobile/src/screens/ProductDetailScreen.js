@@ -12,9 +12,11 @@ import { products } from '../api/client';
 import { colors } from '../theme/colors';
 import RetroButton from '../components/RetroButton';
 import RetroCard from '../components/RetroCard';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function ProductDetailScreen({ route, navigation }) {
   const { productId } = route.params;
+  const { user } = useAuth();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -54,11 +56,47 @@ export default function ProductDetailScreen({ route, navigation }) {
   };
 
   const handleBuyNow = () => {
+    console.log('🛒 [BUY] Tentativa de compra:', {
+      productId: product.id,
+      currentUser: user?.username,
+      owner: product.owner?.username,
+      isSold: product.is_sold
+    });
+
+    if (!user) {
+      Alert.alert('Login Necessário', 'Faça login para comprar produtos.');
+      navigation.navigate('Login');
+      return;
+    }
+
+    if (user.username === product.owner.username) {
+      Alert.alert('Ação Não Permitida', 'Você não pode comprar seu próprio produto.');
+      return;
+    }
+
     if (product.is_sold) {
       Alert.alert('Produto Indisponível', 'Este produto já foi vendido.');
       return;
     }
+
+    console.log('✅ [BUY] Navegando para checkout...');
     navigation.navigate('Checkout', { product });
+  };
+
+  // Check if user can buy this product
+  const canBuyProduct = () => {
+    if (!user) return false;
+    if (!product) return false;
+    if (product.is_sold) return false;
+    if (user.username === product.owner.username) return false;
+    return true;
+  };
+
+  const getBuyButtonText = () => {
+    if (!user) return 'Fazer Login para Comprar';
+    if (user.username === product.owner.username) return 'Seu Produto';
+    if (product.is_sold) return 'Produto Vendido';
+    return 'Comprar';
   };
 
   if (loading) {
@@ -207,13 +245,13 @@ export default function ProductDetailScreen({ route, navigation }) {
       {/* Footer - Action Buttons */}
       <View style={styles.footer}>
         <RetroButton
-          title="Comprar"
+          title={getBuyButtonText()}
           icon="🛒"
           onPress={handleBuyNow}
           variant="primary"
           size="large"
           style={styles.buyButton}
-          disabled={product.is_sold}
+          disabled={!canBuyProduct()}
         />
         <RetroButton
           title="Chat"
