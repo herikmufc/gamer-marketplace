@@ -24,9 +24,17 @@ export default function ProductDetailScreen({ route, navigation }) {
 
   const loadProduct = async () => {
     try {
+      console.log('📦 [PRODUCT DETAIL] Carregando produto:', productId);
       const data = await products.get(productId);
+      console.log('✅ [PRODUCT DETAIL] Produto carregado:', {
+        id: data.id,
+        title: data.title,
+        is_sold: data.is_sold,
+        owner: data.owner?.username
+      });
       setProduct(data);
     } catch (error) {
+      console.error('❌ [PRODUCT DETAIL] Erro:', error);
       Alert.alert('Erro', 'Falha ao carregar produto');
       navigation.goBack();
     } finally {
@@ -46,8 +54,8 @@ export default function ProductDetailScreen({ route, navigation }) {
   };
 
   const handleBuyNow = () => {
-    if (product.status !== 'available') {
-      Alert.alert('Produto Indisponível', 'Este produto não está mais disponível para compra.');
+    if (product.is_sold) {
+      Alert.alert('Produto Indisponível', 'Este produto já foi vendido.');
       return;
     }
     navigation.navigate('Checkout', { product });
@@ -205,7 +213,7 @@ export default function ProductDetailScreen({ route, navigation }) {
           variant="primary"
           size="large"
           style={styles.buyButton}
-          disabled={product.status !== 'available'}
+          disabled={product.is_sold}
         />
         <RetroButton
           title="Chat"

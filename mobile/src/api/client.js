@@ -268,12 +268,29 @@ export const moderation = {
 export const payment = {
   // Criar novo pagamento
   create: async (productId, paymentMethodId = 'pix', installments = 1) => {
-    const response = await apiClient.post('/payment/create', {
-      product_id: productId,
-      payment_method_id: paymentMethodId,
-      installments: installments,
-    });
-    return response.data;
+    try {
+      console.log('💳 [PAYMENT CREATE] Iniciando...', {
+        productId,
+        paymentMethodId,
+        installments
+      });
+
+      const response = await apiClient.post('/payment/create', {
+        product_id: productId,
+        payment_method_id: paymentMethodId,
+        installments: installments,
+      });
+
+      console.log('✅ [PAYMENT CREATE] Sucesso:', response.status);
+      console.log('✅ [PAYMENT CREATE] Data:', response.data);
+
+      return response.data;
+    } catch (error) {
+      console.error('❌ [PAYMENT CREATE] Erro:', error.message);
+      console.error('❌ [PAYMENT CREATE] Status:', error.response?.status);
+      console.error('❌ [PAYMENT CREATE] Data:', error.response?.data);
+      throw error;
+    }
   },
 
   // Consultar transação
