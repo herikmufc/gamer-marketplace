@@ -3,8 +3,10 @@ API Estendida com Chat, Fórum, CPF e Termos Legais
 Execute este arquivo em vez de main.py
 """
 from fastapi import FastAPI, File, UploadFile, Depends, HTTPException, status, WebSocket, WebSocketDisconnect, Form
+from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+import requests
 from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, Text, Boolean, ForeignKey, or_, desc
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session, relationship
@@ -42,6 +44,12 @@ MERCADOPAGO_ACCESS_TOKEN = os.getenv("MERCADOPAGO_ACCESS_TOKEN")
 MERCADOPAGO_PUBLIC_KEY = os.getenv("MERCADOPAGO_PUBLIC_KEY")
 MERCADOPAGO_WEBHOOK_SECRET = os.getenv("MERCADOPAGO_WEBHOOK_SECRET")
 PLATFORM_FEE_PERCENT = float(os.getenv("PLATFORM_FEE_PERCENT", 5.0))
+
+# Mercado Pago Marketplace OAuth
+MERCADOPAGO_APP_ID = os.getenv("MERCADOPAGO_APP_ID")
+MERCADOPAGO_CLIENT_SECRET = os.getenv("MERCADOPAGO_CLIENT_SECRET")
+MERCADOPAGO_REDIRECT_URI = os.getenv("MERCADOPAGO_REDIRECT_URI")
+PLATFORM_COMMISSION_PERCENT = float(os.getenv("PLATFORM_COMMISSION_PERCENT", 5.0))
 
 # Database Setup - Support both SQLite and Supabase PostgreSQL
 USE_SUPABASE = os.getenv("USE_SUPABASE", "false").lower() == "true"
@@ -107,6 +115,13 @@ class User(Base):
     reputation_score = Column(Integer, default=0)
     terms_accepted_at = Column(DateTime)  # NOVO: Quando aceitou termos
     terms_version = Column(String, default="1.0.0")  # NOVO: Versão dos termos
+
+    # Mercado Pago Marketplace OAuth
+    mp_access_token = Column(String, nullable=True)  # Token de acesso do vendedor
+    mp_refresh_token = Column(String, nullable=True)  # Token para renovar acesso
+    mp_user_id = Column(String, nullable=True)  # ID do usuário no Mercado Pago
+    mp_public_key = Column(String, nullable=True)  # Public key do vendedor
+    mp_connected_at = Column(DateTime, nullable=True)  # Quando conectou a conta MP
 
     products = relationship("Product", back_populates="owner")
 
@@ -345,6 +360,9 @@ class UserResponse(BaseModel):
     reputation_score: int
     is_technician: bool
     created_at: datetime
+    # Mercado Pago Marketplace
+    mp_user_id: Optional[str] = None
+    mp_connected_at: Optional[datetime] = None
 
 class ChatMessageCreate(BaseModel):
     content: str
@@ -650,6 +668,133 @@ async def get_me(current_user: User = Depends(get_current_user)):
     response = UserResponse.model_validate(current_user)
     response.cpf = mask_cpf(current_user.cpf)
     return response
+
+# ============================================
+# ENDPOINTS - MERCADO PAGO MARKETPLACE OAUTH
+# ============================================
+
+@app.get("/auth/mercadopago/connect")
+async def mercadopago_connect(current_user: User = Depends(get_current_user)):
+    """
+    Inicia o fluxo OAuth do Mercado Pago
+    Redireciona o usuário para autorizar a aplicação
+    """
+    if not MERCADOPAGO_APP_ID or not MERCADOPAGO_REDIRECT_URI:
+        raise HTTPException(
+            status_code=500,
+            detail="Mercado Pago OAuth não configurado. Configure MERCADOPAGO_APP_ID e MERCADOPAGO_REDIRECT_URI"
+        )
+
+    # URL de autorização do Mercado Pago
+    authorization_url = (
+        f"https://auth.mercadopago.com.br/authorization?"
+        f"client_id={MERCADOPAGO_APP_ID}&"
+        f"response_type=code&"
+        f"platform_id=mp&"
+        f"state={current_user.id}&"  # Usar user ID como state para identificar depois
+        f"redirect_uri={MERCADOPAGO_REDIRECT_URI}"
+    )
+
+    return {
+        "authorization_url": authorization_url,
+        "message": "Redirecione o usuário para esta URL para autorizar"
+    }
+
+@app.get("/auth/mercadopago/callback")
+async def mercadopago_callback(
+    code: str,
+    state: str,
+    db: Session = Depends(get_db)
+):
+    """
+    Callback do OAuth - recebe o código de autorização e troca por access_token
+    """
+    try:
+        print(f"📱 [MP OAUTH] Callback recebido - Code: {code[:20]}..., State (user_id): {state}")
+
+        if not MERCADOPAGO_APP_ID or not MERCADOPAGO_CLIENT_SECRET or not MERCADOPAGO_REDIRECT_URI:
+            raise HTTPException(
+                status_code=500,
+                detail="Mercado Pago OAuth não configurado completamente"
+            )
+
+        # Buscar usuário pelo state (user_id)
+        user = db.query(User).filter(User.id == int(state)).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="Usuário não encontrado")
+
+        # Trocar code por access_token
+        token_url = "https://api.mercadopago.com/oauth/token"
+        token_data = {
+            "client_id": MERCADOPAGO_APP_ID,
+            "client_secret": MERCADOPAGO_CLIENT_SECRET,
+            "grant_type": "authorization_code",
+            "code": code,
+            "redirect_uri": MERCADOPAGO_REDIRECT_URI
+        }
+
+        print(f"🔄 [MP OAUTH] Trocando código por token...")
+        token_response = requests.post(token_url, json=token_data)
+
+        if token_response.status_code != 200:
+            print(f"❌ [MP OAUTH] Erro ao trocar código: {token_response.text}")
+            raise HTTPException(
+                status_code=400,
+                detail=f"Erro ao obter token do Mercado Pago: {token_response.text}"
+            )
+
+        token_info = token_response.json()
+        print(f"✅ [MP OAUTH] Token obtido com sucesso")
+
+        # Salvar tokens no banco
+        user.mp_access_token = token_info["access_token"]
+        user.mp_refresh_token = token_info.get("refresh_token")
+        user.mp_user_id = token_info.get("user_id")
+        user.mp_public_key = token_info.get("public_key")
+        user.mp_connected_at = datetime.utcnow()
+
+        db.commit()
+        db.refresh(user)
+
+        print(f"✅ [MP OAUTH] Usuário {user.username} conectou conta MP (ID: {user.mp_user_id})")
+
+        # Redirecionar para o app mobile com sucesso
+        return RedirectResponse(
+            url=f"exp://192.168.0.1:8081/--/mp-success?user_id={user.id}",
+            status_code=302
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ [MP OAUTH] Erro no callback: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Erro no callback OAuth: {str(e)}")
+
+@app.get("/auth/mercadopago/status")
+async def mercadopago_status(current_user: User = Depends(get_current_user)):
+    """Verifica se o usuário tem conta do Mercado Pago conectada"""
+    return {
+        "connected": bool(current_user.mp_access_token),
+        "mp_user_id": current_user.mp_user_id,
+        "connected_at": current_user.mp_connected_at,
+        "can_receive_payments": bool(current_user.mp_access_token)
+    }
+
+@app.post("/auth/mercadopago/disconnect")
+async def mercadopago_disconnect(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Desconecta a conta do Mercado Pago"""
+    current_user.mp_access_token = None
+    current_user.mp_refresh_token = None
+    current_user.mp_user_id = None
+    current_user.mp_public_key = None
+    current_user.mp_connected_at = None
+
+    db.commit()
+
+    return {"message": "Conta do Mercado Pago desconectada com sucesso"}
 
 # ============================================
 # ENDPOINTS - HEALTH CHECK
@@ -1955,14 +2100,8 @@ async def create_payment(
     4. Retorna URL de pagamento ou QR Code PIX
     """
     print(f"💳 [PAYMENT] Nova tentativa de pagamento - Produto: {payment_data.product_id}, Usuário: {current_user.username}")
-    print(f"💳 [PAYMENT] mp_sdk inicializado? {mp_sdk is not None}")
-    print(f"💳 [PAYMENT] MERCADOPAGO_ACCESS_TOKEN presente? {bool(MERCADOPAGO_ACCESS_TOKEN)}")
 
-    if not mp_sdk:
-        print(f"❌ [PAYMENT] Mercado Pago SDK NÃO está configurado!")
-        raise HTTPException(status_code=500, detail="Mercado Pago não configurado")
-
-    # Buscar produto
+    # Buscar produto e vendedor
     product = db.query(Product).filter(Product.id == payment_data.product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Produto não encontrado")
@@ -1973,13 +2112,35 @@ async def create_payment(
     if product.owner_id == current_user.id:
         raise HTTPException(status_code=400, detail="Você não pode comprar seu próprio produto")
 
+    # Buscar dados do vendedor
+    seller = db.query(User).filter(User.id == product.owner_id).first()
+    if not seller:
+        raise HTTPException(status_code=404, detail="Vendedor não encontrado")
+
+    # MARKETPLACE: Verificar se vendedor tem Mercado Pago conectado
+    if not seller.mp_access_token:
+        raise HTTPException(
+            status_code=400,
+            detail="Este vendedor ainda não conectou sua conta do Mercado Pago. Pagamentos não podem ser processados."
+        )
+
+    print(f"💳 [PAYMENT] Vendedor {seller.username} tem MP conectado (ID: {seller.mp_user_id})")
+    print(f"💳 [PAYMENT] Usando token do vendedor para criar pagamento com split")
+
     # Calcular valores
     amount = product.final_price
-    platform_fee = amount * (PLATFORM_FEE_PERCENT / 100)
+    platform_fee = amount * (PLATFORM_COMMISSION_PERCENT / 100)
     seller_amount = amount - platform_fee
 
+    print(f"💰 [PAYMENT] Valor total: R$ {amount:.2f}")
+    print(f"💰 [PAYMENT] Comissão plataforma ({PLATFORM_COMMISSION_PERCENT}%): R$ {platform_fee:.2f}")
+    print(f"💰 [PAYMENT] Valor para vendedor: R$ {seller_amount:.2f}")
+
     try:
-        # Criar preferência de pagamento no Mercado Pago
+        # Inicializar SDK do MP com o token do VENDEDOR
+        seller_mp_sdk = mercadopago.SDK(seller.mp_access_token)
+
+        # Criar preferência de pagamento usando conta do vendedor
         preference_data = {
             "items": [
                 {
@@ -2002,7 +2163,9 @@ async def create_payment(
             "auto_return": "approved",
             "external_reference": f"product_{product.id}_buyer_{current_user.id}",
             "statement_descriptor": "RETROTRADE BRASIL",
-            "notification_url": "https://your-domain.com/webhook/mercadopago"  # Configurar com domínio real
+            "notification_url": "https://gamer-marketplace.onrender.com/webhook/mercadopago",
+            # MARKETPLACE: Comissão da plataforma
+            "marketplace_fee": float(platform_fee)
         }
 
         # Se for PIX, adicionar configuração específica
@@ -2015,11 +2178,11 @@ async def create_payment(
                 ]
             }
 
-        print(f"💳 [PAYMENT] Criando preferência no Mercado Pago...")
-        print(f"📋 [PAYMENT] Dados da preferência: {preference_data}")
+        print(f"💳 [PAYMENT] Criando preferência no Mercado Pago com token do vendedor...")
+        print(f"📋 [PAYMENT] Marketplace fee: R$ {platform_fee:.2f}")
 
         try:
-            preference_response = mp_sdk.preference().create(preference_data)
+            preference_response = seller_mp_sdk.preference().create(preference_data)
             print(f"✅ [PAYMENT] Resposta do MP recebida")
             print(f"📦 [PAYMENT] Type da resposta: {type(preference_response)}")
             print(f"📦 [PAYMENT] Keys da resposta: {preference_response.keys() if isinstance(preference_response, dict) else 'Não é dict'}")

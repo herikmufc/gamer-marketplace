@@ -442,5 +442,44 @@ export const maintenance = {
   },
 };
 
+// Mercado Pago API
+export const mercadopago = {
+  getConnectUrl: async () => {
+    try {
+      console.log('🔗 [MP] Obtendo URL de conexão...');
+      const response = await apiClient.get('/auth/mercadopago/connect');
+      console.log('✅ [MP] URL obtida:', response.status);
+      return response.data;
+    } catch (error) {
+      console.error('❌ [MP] Erro ao obter URL:', error.message);
+      throw error;
+    }
+  },
+
+  getStatus: async () => {
+    try {
+      console.log('🔍 [MP] Verificando status da conexão...');
+      const response = await apiClient.get('/auth/mercadopago/status');
+      console.log('✅ [MP] Status obtido:', response.status);
+      return response.data;
+    } catch (error) {
+      console.error('❌ [MP] Erro ao obter status:', error.message);
+      throw error;
+    }
+  },
+
+  disconnect: async () => {
+    try {
+      console.log('🔌 [MP] Desconectando conta...');
+      const response = await apiClient.post('/auth/mercadopago/disconnect');
+      console.log('✅ [MP] Conta desconectada:', response.status);
+      return response.data;
+    } catch (error) {
+      console.error('❌ [MP] Erro ao desconectar:', error.message);
+      throw error;
+    }
+  },
+};
+
 export const api = apiClient;
 export default apiClient;

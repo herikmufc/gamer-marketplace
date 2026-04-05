@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,14 +6,101 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
+  Linking,
+  ActivityIndicator,
 } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
+import { mercadopago } from '../api/client';
 import { colors } from '../theme/colors';
 import RetroButton from '../components/RetroButton';
 import RetroCard from '../components/RetroCard';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function ProfileScreen({ navigation }) {
   const { user, logout } = useAuth();
+  const [mpStatus, setMpStatus] = useState(null);
+  const [loadingMp, setLoadingMp] = useState(true);
+  const [connecting, setConnecting] = useState(false);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      loadMpStatus();
+    }, [])
+  );
+
+  const loadMpStatus = async () => {
+    try {
+      setLoadingMp(true);
+      const status = await mercadopago.getStatus();
+      setMpStatus(status);
+      console.log('📊 [MP STATUS]:', status);
+    } catch (error) {
+      console.error('❌ Erro ao carregar status MP:', error);
+    } finally {
+      setLoadingMp(false);
+    }
+  };
+
+  const handleConnectMercadoPago = async () => {
+    try {
+      setConnecting(true);
+      console.log('🔗 Iniciando conexão com Mercado Pago...');
+
+      const { authorization_url } = await mercadopago.getConnectUrl();
+      console.log('📱 URL de autorização:', authorization_url);
+
+      const canOpen = await Linking.canOpenURL(authorization_url);
+      if (canOpen) {
+        await Linking.openURL(authorization_url);
+        Alert.alert(
+          'Autorização Necessária',
+          'Você será redirecionado para o Mercado Pago. Após autorizar, volte para o app.',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                setTimeout(() => loadMpStatus(), 3000);
+              },
+            },
+          ]
+        );
+      } else {
+        Alert.alert('Erro', 'Não foi possível abrir o Mercado Pago');
+      }
+    } catch (error) {
+      console.error('❌ Erro ao conectar MP:', error);
+      Alert.alert(
+        'Erro',
+        error.response?.data?.detail || 'Não foi possível conectar ao Mercado Pago'
+      );
+    } finally {
+      setConnecting(false);
+    }
+  };
+
+  const handleDisconnectMercadoPago = async () => {
+    Alert.alert(
+      'Desconectar Mercado Pago',
+      'Você não poderá receber pagamentos até conectar novamente. Deseja continuar?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Desconectar',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await mercadopago.disconnect();
+              Alert.alert('Sucesso', 'Conta desconectada com sucesso');
+              loadMpStatus();
+            } catch (error) {
+              console.error('❌ Erro ao desconectar MP:', error);
+              Alert.alert('Erro', 'Não foi possível desconectar');
+            }
+          },
+        },
+      ]
+    );
+  };
 
   const handleLogout = () => {
     Alert.alert('Sair', 'Deseja realmente sair?', [
@@ -54,6 +141,59 @@ export default function ProfileScreen({ navigation }) {
           <Text style={styles.statValue}>0</Text>
           <Text style={styles.statLabel}>Avaliações</Text>
         </RetroCard>
+      </View>
+
+      {/* Mercado Pago Status */}
+      <View style={styles.mpSection}>
+        <Text style={styles.mpTitle}>💳 MERCADO PAGO</Text>
+
+        {loadingMp ? (
+          <RetroCard style={styles.mpCard}>
+            <ActivityIndicator size="small" color={colors.yellow.primary} />
+            <Text style={styles.mpLoadingText}>Carregando...</Text>
+          </RetroCard>
+        ) : mpStatus?.connected ? (
+          <RetroCard variant="highlighted" style={styles.mpCard}>
+            <View style={styles.mpHeader}>
+              <Text style={styles.mpIcon}>✅</Text>
+              <View style={styles.mpInfo}>
+                <Text style={styles.mpStatusTitle}>Conta Conectada</Text>
+                <Text style={styles.mpStatusText}>
+                  Você pode receber pagamentos
+                </Text>
+              </View>
+            </View>
+            <RetroButton
+              title="Desconectar"
+              icon="🔌"
+              onPress={handleDisconnectMercadoPago}
+              variant="secondary"
+              size="small"
+              style={styles.mpButton}
+            />
+          </RetroCard>
+        ) : (
+          <RetroCard style={styles.mpCard}>
+            <View style={styles.mpHeader}>
+              <Text style={styles.mpIcon}>⚠️</Text>
+              <View style={styles.mpInfo}>
+                <Text style={styles.mpStatusTitle}>Conecte sua Conta</Text>
+                <Text style={styles.mpStatusText}>
+                  Necessário para receber pagamentos
+                </Text>
+              </View>
+            </View>
+            <RetroButton
+              title="Conectar Mercado Pago"
+              icon="🔗"
+              onPress={handleConnectMercadoPago}
+              loading={connecting}
+              variant="primary"
+              size="small"
+              style={styles.mpButton}
+            />
+          </RetroCard>
+        )}
       </View>
 
       {/* Menu */}
@@ -239,5 +379,50 @@ const styles = StyleSheet.create({
   },
   logoutButton: {
     margin: 20,
+  },
+  mpSection: {
+    paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  mpTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: colors.yellow.primary,
+    marginBottom: 12,
+    letterSpacing: 1,
+  },
+  mpCard: {
+    padding: 16,
+  },
+  mpLoadingText: {
+    fontSize: 13,
+    color: colors.text.secondary,
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  mpHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  mpIcon: {
+    fontSize: 32,
+    marginRight: 12,
+  },
+  mpInfo: {
+    flex: 1,
+  },
+  mpStatusTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.yellow.primary,
+    marginBottom: 4,
+  },
+  mpStatusText: {
+    fontSize: 12,
+    color: colors.text.secondary,
+  },
+  mpButton: {
+    marginTop: 8,
   },
 });

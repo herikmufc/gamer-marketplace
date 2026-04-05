@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
+  Linking,
 } from 'react-native';
 import { payment } from '../api/client';
 import { colors } from '../theme/colors';
@@ -122,9 +123,40 @@ export default function CheckoutScreen({ route, navigation }) {
           <RetroButton
             title="Ir para Pagamento"
             icon="🔗"
-            onPress={() => {
-              // TODO: Abrir navegador com init_point
-              Alert.alert('Redirecionando...', 'Abrindo Mercado Pago');
+            onPress={async () => {
+              try {
+                console.log('🔗 Tentando abrir Mercado Pago...');
+                console.log('📱 Preference ID:', paymentCreated.mp_preference_id);
+                console.log('🌐 Init Point:', paymentCreated.init_point);
+
+                // Tentar abrir o app do Mercado Pago primeiro
+                if (paymentCreated.mp_preference_id) {
+                  const appDeepLink = `mercadopago://checkout?preference-id=${paymentCreated.mp_preference_id}`;
+                  console.log('📱 Tentando abrir app com deep link:', appDeepLink);
+
+                  const canOpenApp = await Linking.canOpenURL(appDeepLink);
+                  if (canOpenApp) {
+                    await Linking.openURL(appDeepLink);
+                    console.log('✅ App do Mercado Pago aberto');
+                    return;
+                  } else {
+                    console.log('⚠️ App do Mercado Pago não está instalado, abrindo navegador...');
+                  }
+                }
+
+                // Se não conseguiu abrir o app, abre no navegador
+                const canOpenBrowser = await Linking.canOpenURL(paymentCreated.init_point);
+                if (canOpenBrowser) {
+                  await Linking.openURL(paymentCreated.init_point);
+                  console.log('✅ Navegador aberto com sucesso');
+                } else {
+                  console.warn('⚠️ Não é possível abrir esta URL');
+                  Alert.alert('Erro', 'Não foi possível abrir o link de pagamento');
+                }
+              } catch (error) {
+                console.error('❌ Erro ao abrir Mercado Pago:', error);
+                Alert.alert('Erro', 'Não foi possível abrir o Mercado Pago');
+              }
             }}
             variant="primary"
             size="large"
