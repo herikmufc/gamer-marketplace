@@ -1412,9 +1412,9 @@ class PaymentResponse(BaseModel):
     model_config = {"from_attributes": True}
 
     transaction_id: int
-    payment_id: Optional[str]
-    mp_preference_id: Optional[str]
-    init_point: Optional[str]  # URL para redirecionar usuário no MP
+    payment_id: Optional[str] = None
+    mp_preference_id: Optional[str] = None
+    init_point: Optional[str] = None  # URL para redirecionar usuário no MP
     status: str
     amount: float
     qr_code: Optional[str] = None  # QR Code PIX (base64)
@@ -2071,6 +2071,7 @@ async def create_payment(
         # Retornar resposta
         response_data = {
             "transaction_id": transaction.id,
+            "payment_id": None,  # Será preenchido após o pagamento ser processado
             "mp_preference_id": preference["id"],
             "init_point": preference["init_point"],  # URL para web
             "status": transaction.status,
