@@ -2016,17 +2016,40 @@ async def create_payment(
             }
 
         print(f"💳 [PAYMENT] Criando preferência no Mercado Pago...")
-        preference_response = mp_sdk.preference().create(preference_data)
-        print(f"✅ [PAYMENT] Resposta do MP: {preference_response}")
+        print(f"📋 [PAYMENT] Dados da preferência: {preference_data}")
 
-        preference = preference_response.get("response", {})
-        print(f"📦 [PAYMENT] Preference data: {preference}")
+        try:
+            preference_response = mp_sdk.preference().create(preference_data)
+            print(f"✅ [PAYMENT] Resposta do MP recebida")
+            print(f"📦 [PAYMENT] Type da resposta: {type(preference_response)}")
+            print(f"📦 [PAYMENT] Keys da resposta: {preference_response.keys() if isinstance(preference_response, dict) else 'Não é dict'}")
+            print(f"📦 [PAYMENT] Resposta completa: {preference_response}")
+        except Exception as mp_error:
+            print(f"❌ [PAYMENT] Erro ao chamar MP SDK: {mp_error}")
+            raise Exception(f"Erro ao criar preferência no Mercado Pago: {str(mp_error)}")
+
+        # Tentar diferentes estruturas de resposta
+        preference = None
+        preference_id = None
+
+        # Estrutura 1: response.response.id
+        if isinstance(preference_response, dict):
+            if "response" in preference_response:
+                preference = preference_response["response"]
+                preference_id = preference.get("id")
+                print(f"📍 [PAYMENT] Encontrado via response.response.id: {preference_id}")
+
+            # Estrutura 2: response.id (direto)
+            if not preference_id and "id" in preference_response:
+                preference_id = preference_response["id"]
+                preference = preference_response
+                print(f"📍 [PAYMENT] Encontrado via response.id: {preference_id}")
 
         # Verificar se tem ID
-        preference_id = preference.get("id")
         if not preference_id:
-            print(f"❌ [PAYMENT] Preference sem ID! Response completa: {preference_response}")
-            raise Exception("Mercado Pago não retornou ID da preferência")
+            print(f"❌ [PAYMENT] Preference sem ID!")
+            print(f"❌ [PAYMENT] Response completa: {preference_response}")
+            raise Exception("Mercado Pago não retornou ID da preferência. Verifique as credenciais ou status da conta.")
 
         # Criar transação no banco
         transaction = Transaction(
@@ -2065,6 +2088,10 @@ async def create_payment(
 
     except Exception as e:
         db.rollback()
+        print(f"❌ [PAYMENT] ERRO FINAL: {str(e)}")
+        import traceback
+        print(f"❌ [PAYMENT] Traceback completo:")
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Erro ao criar pagamento: {str(e)}")
 
 @app.get("/payment/{transaction_id}", response_model=TransactionResponse)
