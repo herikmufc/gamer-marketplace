@@ -8,18 +8,22 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { products } from '../api/client';
+import { products, mercadopago } from '../api/client';
 import api from '../api/client';
 import { colors } from '../theme/colors';
 import RetroButton from '../components/RetroButton';
 import RetroCard from '../components/RetroCard';
+import MercadoPagoAuthModal from '../components/MercadoPagoAuthModal';
 import { useAuth } from '../contexts/AuthContext';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function ProductDetailScreen({ route, navigation }) {
   const { productId } = route.params;
   const { user } = useAuth();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showMpModal, setShowMpModal] = useState(false);
+  const [mpConnected, setMpConnected] = useState(false);
 
   useEffect(() => {
     loadProduct();
@@ -85,7 +89,7 @@ export default function ProductDetailScreen({ route, navigation }) {
     }
   };
 
-  const handleBuyNow = () => {
+  const handleBuyNow = async () => {
     console.log('🛒 [BUY] Tentativa de compra:', {
       productId: product.id,
       currentUser: user?.username,
@@ -107,6 +111,19 @@ export default function ProductDetailScreen({ route, navigation }) {
     if (product.is_sold) {
       Alert.alert('Produto Indisponível', 'Este produto já foi vendido.');
       return;
+    }
+
+    // Check if user has Mercado Pago connected
+    try {
+      const status = await mercadopago.getStatus();
+      if (!status.connected) {
+        console.log('⚠️ [BUY] Usuário não tem MP conectado');
+        setShowMpModal(true);
+        return;
+      }
+      setMpConnected(true);
+    } catch (error) {
+      console.error('❌ Erro ao verificar MP:', error);
     }
 
     console.log('✅ [BUY] Navegando para checkout...');
@@ -143,6 +160,7 @@ export default function ProductDetailScreen({ route, navigation }) {
   }
 
   return (
+    <>
     <View style={styles.container}>
       <ScrollView>
         {/* Header */}
@@ -298,6 +316,19 @@ export default function ProductDetailScreen({ route, navigation }) {
         />
       </View>
     </View>
+
+    {/* Mercado Pago Auth Modal */}
+    <MercadoPagoAuthModal
+      visible={showMpModal}
+      onClose={() => setShowMpModal(false)}
+      onSuccess={() => {
+        setMpConnected(true);
+        setShowMpModal(false);
+        navigation.navigate('Checkout', { product });
+      }}
+      type="buy"
+    />
+  </>
   );
 }
 

@@ -10,11 +10,13 @@ import {
   Switch,
   Image,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
-import { products } from '../api/client';
+import { products, mercadopago } from '../api/client';
 import { colors } from '../theme/colors';
 import RetroButton from '../components/RetroButton';
 import RetroCard from '../components/RetroCard';
+import MercadoPagoAuthModal from '../components/MercadoPagoAuthModal';
 
 export default function CreateProductScreen({ navigation }) {
   const [formData, setFormData] = useState({
@@ -32,6 +34,31 @@ export default function CreateProductScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [aiSuggestion, setAiSuggestion] = useState(null);
+  const [showMpModal, setShowMpModal] = useState(false);
+  const [mpConnected, setMpConnected] = useState(false);
+  const [checkingMp, setCheckingMp] = useState(true);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      checkMpConnection();
+    }, [])
+  );
+
+  const checkMpConnection = async () => {
+    try {
+      setCheckingMp(true);
+      const status = await mercadopago.getStatus();
+      setMpConnected(status.connected);
+
+      if (!status.connected) {
+        setShowMpModal(true);
+      }
+    } catch (error) {
+      console.error('❌ Erro ao verificar MP:', error);
+    } finally {
+      setCheckingMp(false);
+    }
+  };
 
   const categories = [
     { id: 'console', label: 'Console', icon: '🕹️' },
@@ -197,6 +224,7 @@ export default function CreateProductScreen({ navigation }) {
   };
 
   return (
+    <>
     <ScrollView style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerTop}>
@@ -430,6 +458,21 @@ export default function CreateProductScreen({ navigation }) {
 
       <View style={{ height: 40 }} />
     </ScrollView>
+
+    {/* Mercado Pago Auth Modal */}
+    <MercadoPagoAuthModal
+      visible={showMpModal}
+      onClose={() => {
+        setShowMpModal(false);
+        navigation.goBack();
+      }}
+      onSuccess={() => {
+        setMpConnected(true);
+        setShowMpModal(false);
+      }}
+      type="sell"
+    />
+  </>
   );
 }
 
