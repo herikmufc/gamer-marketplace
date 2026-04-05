@@ -73,8 +73,19 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 # Mercado Pago Client
 mp_sdk = None
+print(f"🔍 [MERCADOPAGO] Inicializando SDK...")
+print(f"🔍 [MERCADOPAGO] ACCESS_TOKEN presente? {bool(MERCADOPAGO_ACCESS_TOKEN)}")
+print(f"🔍 [MERCADOPAGO] ACCESS_TOKEN primeiros 20 caracteres: {MERCADOPAGO_ACCESS_TOKEN[:20] if MERCADOPAGO_ACCESS_TOKEN else 'NENHUM'}")
+
 if MERCADOPAGO_ACCESS_TOKEN:
-    mp_sdk = mercadopago.SDK(MERCADOPAGO_ACCESS_TOKEN)
+    try:
+        mp_sdk = mercadopago.SDK(MERCADOPAGO_ACCESS_TOKEN)
+        print(f"✅ [MERCADOPAGO] SDK inicializado com sucesso!")
+    except Exception as e:
+        print(f"❌ [MERCADOPAGO] Erro ao inicializar SDK: {e}")
+        mp_sdk = None
+else:
+    print(f"❌ [MERCADOPAGO] ACCESS_TOKEN não configurado!")
 
 # ============================================
 # DATABASE MODELS
@@ -652,8 +663,10 @@ def health_check():
         "database": "connected" if SessionLocal else "disconnected",
         "gemini_api": "configured" if os.getenv("GEMINI_API_KEY") else "not_configured",
         "gemini_model": "gemini-2.5-flash",
+        "mercadopago": "configured" if mp_sdk else "not_configured",
+        "mercadopago_token_present": bool(MERCADOPAGO_ACCESS_TOKEN),
         "version": "2.0.2",
-        "build": "2026-04-02",
+        "build": "2026-04-05",
         "timestamp": datetime.utcnow().isoformat()
     }
 
