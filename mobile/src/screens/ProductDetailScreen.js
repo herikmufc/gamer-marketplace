@@ -9,6 +9,7 @@ import {
   Alert,
 } from 'react-native';
 import { products } from '../api/client';
+import api from '../api/client';
 import { colors } from '../theme/colors';
 import RetroButton from '../components/RetroButton';
 import RetroCard from '../components/RetroCard';
@@ -56,20 +57,32 @@ export default function ProductDetailScreen({ route, navigation }) {
     }
   };
 
-  const handleContact = () => {
+  const handleContact = async () => {
     console.log('💬 [CHAT] Abrindo chat com:', product.owner.username);
 
-    // TODO: Implementar navegação para chat individual
-    // Por enquanto, navega para lista de chats
-    navigation.navigate('Main', {
-      screen: 'ChatTab'
-    });
+    try {
+      setLoading(true);
+      // Criar ou obter sala de chat para este produto
+      const room = await api.chat.createRoom(product.id);
 
-    Alert.alert(
-      'Chat',
-      `Funcionalidade de chat individual em desenvolvimento. Por enquanto, veja suas conversas na aba Chat.`,
-      [{ text: 'OK' }]
-    );
+      console.log('✅ [CHAT] Sala criada/obtida:', room.id);
+
+      // Navegar para tela de chat
+      navigation.navigate('Chat', {
+        roomId: room.id,
+        productTitle: product.title,
+        otherUser: product.owner.username,
+      });
+    } catch (error) {
+      console.error('❌ [CHAT] Erro ao abrir chat:', error);
+      Alert.alert(
+        'Erro',
+        'Não foi possível abrir o chat. Tente novamente.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleBuyNow = () => {

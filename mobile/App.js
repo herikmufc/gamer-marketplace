@@ -16,6 +16,7 @@ import CreateProductScreen from './src/screens/CreateProductScreen';
 import ProductDetailScreen from './src/screens/ProductDetailScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import ChatListScreen from './src/screens/ChatListScreen';
+import ChatScreen from './src/screens/ChatScreen';
 import ForumCategoriesScreen from './src/screens/ForumCategoriesScreen';
 import ForumTopicsScreen from './src/screens/ForumTopicsScreen';
 import CreateForumTopicScreen from './src/screens/CreateForumTopicScreen';
@@ -132,6 +133,7 @@ function AppStack() {
       <Stack.Screen name="Main" component={MainTabs} />
       <Stack.Screen name="CreateProduct" component={CreateProductScreen} />
       <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
+      <Stack.Screen name="Chat" component={ChatScreen} />
       <Stack.Screen name="IdentifyGame" component={IdentifyGameScreen} />
       <Stack.Screen name="EventDetail" component={EventDetailScreen} />
       <Stack.Screen name="ForumTopics" component={ForumTopicsScreen} />

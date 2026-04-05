@@ -481,5 +481,59 @@ export const mercadopago = {
   },
 };
 
+// Chat API
+export const chat = {
+  createRoom: async (productId) => {
+    try {
+      console.log('💬 [CHAT] Criando sala para produto:', productId);
+      const response = await apiClient.post(`/chat/rooms/${productId}`);
+      console.log('✅ [CHAT] Sala criada:', response.status);
+      return response.data;
+    } catch (error) {
+      console.error('❌ [CHAT] Erro ao criar sala:', error.message);
+      throw error;
+    }
+  },
+
+  getRooms: async () => {
+    try {
+      console.log('💬 [CHAT] Buscando salas...');
+      const response = await apiClient.get('/chat/rooms');
+      console.log('✅ [CHAT] Salas obtidas:', response.status);
+      return response.data;
+    } catch (error) {
+      console.error('❌ [CHAT] Erro ao buscar salas:', error.message);
+      throw error;
+    }
+  },
+
+  getMessages: async (roomId) => {
+    try {
+      console.log('💬 [CHAT] Buscando mensagens da sala:', roomId);
+      const response = await apiClient.get(`/chat/rooms/${roomId}/messages`);
+      console.log('✅ [CHAT] Mensagens obtidas:', response.status);
+      return response.data;
+    } catch (error) {
+      console.error('❌ [CHAT] Erro ao buscar mensagens:', error.message);
+      throw error;
+    }
+  },
+
+  sendMessage: async (roomId, content, messageType = 'text') => {
+    try {
+      console.log('💬 [CHAT] Enviando mensagem para sala:', roomId);
+      const response = await apiClient.post(`/chat/rooms/${roomId}/messages`, {
+        content,
+        message_type: messageType,
+      });
+      console.log('✅ [CHAT] Mensagem enviada:', response.status);
+      return response.data;
+    } catch (error) {
+      console.error('❌ [CHAT] Erro ao enviar mensagem:', error.message);
+      throw error;
+    }
+  },
+};
+
 export const api = apiClient;
 export default apiClient;
