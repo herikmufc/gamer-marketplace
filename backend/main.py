@@ -1954,7 +1954,12 @@ async def create_payment(
     3. Cria transaction com status 'pending'
     4. Retorna URL de pagamento ou QR Code PIX
     """
+    print(f"💳 [PAYMENT] Nova tentativa de pagamento - Produto: {payment_data.product_id}, Usuário: {current_user.username}")
+    print(f"💳 [PAYMENT] mp_sdk inicializado? {mp_sdk is not None}")
+    print(f"💳 [PAYMENT] MERCADOPAGO_ACCESS_TOKEN presente? {bool(MERCADOPAGO_ACCESS_TOKEN)}")
+
     if not mp_sdk:
+        print(f"❌ [PAYMENT] Mercado Pago SDK NÃO está configurado!")
         raise HTTPException(status_code=500, detail="Mercado Pago não configurado")
 
     # Buscar produto
@@ -2010,15 +2015,25 @@ async def create_payment(
                 ]
             }
 
+        print(f"💳 [PAYMENT] Criando preferência no Mercado Pago...")
         preference_response = mp_sdk.preference().create(preference_data)
-        preference = preference_response["response"]
+        print(f"✅ [PAYMENT] Resposta do MP: {preference_response}")
+
+        preference = preference_response.get("response", {})
+        print(f"📦 [PAYMENT] Preference data: {preference}")
+
+        # Verificar se tem ID
+        preference_id = preference.get("id")
+        if not preference_id:
+            print(f"❌ [PAYMENT] Preference sem ID! Response completa: {preference_response}")
+            raise Exception("Mercado Pago não retornou ID da preferência")
 
         # Criar transação no banco
         transaction = Transaction(
             product_id=product.id,
             buyer_id=current_user.id,
             seller_id=product.owner_id,
-            mp_preference_id=preference["id"],
+            mp_preference_id=preference_id,
             amount=amount,
             platform_fee=platform_fee,
             seller_amount=seller_amount,
