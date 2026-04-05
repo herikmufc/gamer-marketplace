@@ -1096,6 +1096,45 @@ def get_product(product_id: int, db: Session = Depends(get_db)):
         print(f"❌ Error getting product: {e}")
         raise HTTPException(status_code=500, detail=f"Erro ao buscar produto: {str(e)}")
 
+@app.delete("/products/{product_id}")
+def delete_product(
+    product_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Delete product (only owner can delete)"""
+    try:
+        product = db.query(Product).filter(Product.id == product_id).first()
+        if not product:
+            raise HTTPException(status_code=404, detail="Produto não encontrado")
+
+        # Check if user is the owner
+        if product.owner_id != current_user.id:
+            raise HTTPException(
+                status_code=403,
+                detail="Você não tem permissão para excluir este produto"
+            )
+
+        # Check if product is already sold
+        if product.is_sold:
+            raise HTTPException(
+                status_code=400,
+                detail="Não é possível excluir um produto já vendido"
+            )
+
+        db.delete(product)
+        db.commit()
+
+        print(f"✅ Produto {product_id} excluído por {current_user.username}")
+        return {"message": "Produto excluído com sucesso"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Error deleting product: {e}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Erro ao excluir produto: {str(e)}")
+
 @app.get("/search")
 def search_products(q: str, db: Session = Depends(get_db)):
     """Search products by title or description"""

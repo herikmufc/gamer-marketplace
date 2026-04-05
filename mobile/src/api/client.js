@@ -233,6 +233,19 @@ export const products = {
       throw error;
     }
   },
+
+  delete: async (id) => {
+    try {
+      console.log('🗑️ [DELETE] Excluindo produto:', id);
+      const response = await apiClient.delete(`/products/${id}`);
+      console.log('✅ [DELETE] Produto excluído:', response.status);
+      return response.data;
+    } catch (error) {
+      console.error('❌ [DELETE] Erro ao excluir produto:', error);
+      console.error('❌ [DELETE] Response:', error.response?.data);
+      throw error;
+    }
+  },
 };
 
 // Events API

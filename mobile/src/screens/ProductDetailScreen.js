@@ -151,6 +151,40 @@ export default function ProductDetailScreen({ route, navigation }) {
     return 'Comprar';
   };
 
+  const handleDelete = () => {
+    Alert.alert(
+      'Excluir Produto',
+      'Tem certeza que deseja excluir este produto? Esta ação não pode ser desfeita.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Excluir',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setLoading(true);
+              await products.delete(product.id);
+              Alert.alert('Sucesso', 'Produto excluído com sucesso!', [
+                {
+                  text: 'OK',
+                  onPress: () => navigation.navigate('Main'),
+                },
+              ]);
+            } catch (error) {
+              console.error('❌ Erro ao excluir produto:', error);
+              Alert.alert('Erro', 'Não foi possível excluir o produto');
+              setLoading(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const isOwner = () => {
+    return product && user && product.owner && user.username === product.owner.username;
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -175,14 +209,44 @@ export default function ProductDetailScreen({ route, navigation }) {
 
         {/* Image Gallery */}
         <View style={styles.imageGallery}>
-          <Text style={styles.imageGalleryPlaceholder}>📦</Text>
-          <Text style={styles.imageCount}>🖼️ GALERIA DE FOTOS</Text>
+          {(() => {
+            let imageUrls = [];
+            try {
+              if (product.images) {
+                imageUrls = JSON.parse(product.images);
+              }
+            } catch (e) {
+              console.warn('Failed to parse product images:', e);
+            }
+
+            if (imageUrls.length > 0) {
+              return (
+                <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false}>
+                  {imageUrls.map((url, index) => (
+                    <Image
+                      key={index}
+                      source={{ uri: url }}
+                      style={styles.galleryImage}
+                      resizeMode="cover"
+                    />
+                  ))}
+                </ScrollView>
+              );
+            } else {
+              return (
+                <>
+                  <Text style={styles.imageGalleryPlaceholder}>📦</Text>
+                  <Text style={styles.imageCount}>SEM FOTOS</Text>
+                </>
+              );
+            }
+          })()}
         </View>
 
         {/* Product Info */}
         <View style={styles.content}>
-          <Text style={styles.title}>{product.title}</Text>
-          <Text style={styles.console}>{product.console_type}</Text>
+          <Text style={styles.title}>{product?.title || 'Sem título'}</Text>
+          <Text style={styles.console}>{product?.console_type || 'Console não especificado'}</Text>
 
           {/* Price */}
           <RetroCard variant="premium" style={styles.priceContainer}>
@@ -297,23 +361,38 @@ export default function ProductDetailScreen({ route, navigation }) {
 
       {/* Footer - Action Buttons */}
       <View style={styles.footer}>
-        <RetroButton
-          title={getBuyButtonText()}
-          icon="🛒"
-          onPress={handleBuyNow}
-          variant="primary"
-          size="large"
-          style={styles.buyButton}
-          disabled={!canBuyProduct()}
-        />
-        <RetroButton
-          title="Chat"
-          icon="💬"
-          onPress={handleContact}
-          variant="secondary"
-          size="large"
-          style={styles.contactButton}
-        />
+        {isOwner() ? (
+          <>
+            <RetroButton
+              title="Excluir Produto"
+              icon="🗑️"
+              onPress={handleDelete}
+              variant="danger"
+              size="large"
+              style={styles.deleteButton}
+            />
+          </>
+        ) : (
+          <>
+            <RetroButton
+              title={getBuyButtonText()}
+              icon="🛒"
+              onPress={handleBuyNow}
+              variant="primary"
+              size="large"
+              style={styles.buyButton}
+              disabled={!canBuyProduct()}
+            />
+            <RetroButton
+              title="Chat"
+              icon="💬"
+              onPress={handleContact}
+              variant="secondary"
+              size="large"
+              style={styles.contactButton}
+            />
+          </>
+        )}
       </View>
     </View>
 
@@ -379,6 +458,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     letterSpacing: 1,
+  },
+  galleryImage: {
+    width: 400,
+    height: 300,
   },
   content: {
     padding: 20,
@@ -556,6 +639,9 @@ const styles = StyleSheet.create({
     flex: 2,
   },
   contactButton: {
+    flex: 1,
+  },
+  deleteButton: {
     flex: 1,
   },
 });
