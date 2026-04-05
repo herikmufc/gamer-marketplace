@@ -807,64 +807,68 @@ def run_mp_migration():
     Acesse via: https://gamer-marketplace.onrender.com/run-mp-migration
     """
     try:
-        import sqlite3
-        from pathlib import Path
+        from sqlalchemy import text, inspect
 
-        db_path = Path(__file__).parent / "gamer_marketplace.db"
-
-        if not db_path.exists():
-            return {
-                "status": "error",
-                "message": f"Database not found at {db_path}"
-            }
-
-        conn = sqlite3.connect(db_path)
-        cursor = conn.cursor()
-
-        # Check existing columns
-        cursor.execute("PRAGMA table_info(users)")
-        columns = [col[1] for col in cursor.fetchall()]
+        # Usar o engine já configurado (funciona com SQLite e PostgreSQL)
+        inspector = inspect(engine)
+        existing_columns = [col['name'] for col in inspector.get_columns('users')]
 
         migrations_needed = []
         migrations_executed = []
 
-        new_columns = {
-            'mp_access_token': 'ALTER TABLE users ADD COLUMN mp_access_token TEXT',
-            'mp_refresh_token': 'ALTER TABLE users ADD COLUMN mp_refresh_token TEXT',
-            'mp_user_id': 'ALTER TABLE users ADD COLUMN mp_user_id TEXT',
-            'mp_public_key': 'ALTER TABLE users ADD COLUMN mp_public_key TEXT',
-            'mp_connected_at': 'ALTER TABLE users ADD COLUMN mp_connected_at DATETIME'
-        }
+        # Definir colunas e SQL apropriado para cada tipo de banco
+        if USE_SUPABASE or 'postgresql' in str(engine.url):
+            # PostgreSQL
+            new_columns = {
+                'mp_access_token': 'ALTER TABLE users ADD COLUMN mp_access_token VARCHAR',
+                'mp_refresh_token': 'ALTER TABLE users ADD COLUMN mp_refresh_token VARCHAR',
+                'mp_user_id': 'ALTER TABLE users ADD COLUMN mp_user_id VARCHAR',
+                'mp_public_key': 'ALTER TABLE users ADD COLUMN mp_public_key VARCHAR',
+                'mp_connected_at': 'ALTER TABLE users ADD COLUMN mp_connected_at TIMESTAMP'
+            }
+        else:
+            # SQLite
+            new_columns = {
+                'mp_access_token': 'ALTER TABLE users ADD COLUMN mp_access_token TEXT',
+                'mp_refresh_token': 'ALTER TABLE users ADD COLUMN mp_refresh_token TEXT',
+                'mp_user_id': 'ALTER TABLE users ADD COLUMN mp_user_id TEXT',
+                'mp_public_key': 'ALTER TABLE users ADD COLUMN mp_public_key TEXT',
+                'mp_connected_at': 'ALTER TABLE users ADD COLUMN mp_connected_at DATETIME'
+            }
 
         for col_name, sql in new_columns.items():
-            if col_name not in columns:
+            if col_name not in existing_columns:
                 migrations_needed.append(sql)
 
         if not migrations_needed:
             return {
                 "status": "success",
                 "message": "All Mercado Pago fields already exist. No migration needed.",
-                "columns_checked": list(new_columns.keys())
+                "database_type": "PostgreSQL" if USE_SUPABASE else "SQLite",
+                "columns_checked": list(new_columns.keys()),
+                "existing_columns": existing_columns
             }
 
         # Execute migrations
-        for migration_sql in migrations_needed:
-            cursor.execute(migration_sql)
-            migrations_executed.append(migration_sql)
-
-        conn.commit()
-        conn.close()
+        with engine.connect() as conn:
+            for migration_sql in migrations_needed:
+                conn.execute(text(migration_sql))
+                migrations_executed.append(migration_sql)
+            conn.commit()
 
         return {
             "status": "success",
             "message": f"Migration completed! Added {len(migrations_executed)} new columns.",
+            "database_type": "PostgreSQL/Supabase" if USE_SUPABASE else "SQLite",
             "migrations_executed": migrations_executed
         }
 
     except Exception as e:
+        import traceback
         return {
             "status": "error",
-            "message": str(e)
+            "message": str(e),
+            "traceback": traceback.format_exc()
         }
 
 @app.get("/health")
