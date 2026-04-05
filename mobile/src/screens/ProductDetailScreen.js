@@ -9,8 +9,7 @@ import {
   Alert,
   Image,
 } from 'react-native';
-import { products, mercadopago } from '../api/client';
-import api from '../api/client';
+import { products, mercadopago, chat } from '../api/client';
 import { colors } from '../theme/colors';
 import RetroButton from '../components/RetroButton';
 import RetroCard from '../components/RetroCard';
@@ -68,7 +67,7 @@ export default function ProductDetailScreen({ route, navigation }) {
     try {
       setLoading(true);
       // Criar ou obter sala de chat para este produto
-      const room = await api.chat.createRoom(product.id);
+      const room = await chat.createRoom(product.id);
 
       console.log('✅ [CHAT] Sala criada/obtida:', room.id);
 
@@ -210,11 +209,14 @@ export default function ProductDetailScreen({ route, navigation }) {
 
         {/* Image Gallery */}
         <View style={styles.imageGallery}>
-          {(() => {
+          {product && (() => {
             let imageUrls = [];
             try {
-              if (product.images) {
-                imageUrls = JSON.parse(product.images);
+              if (product.images && typeof product.images === 'string') {
+                const parsed = JSON.parse(product.images);
+                if (Array.isArray(parsed)) {
+                  imageUrls = parsed.filter(url => url && typeof url === 'string');
+                }
               }
             } catch (e) {
               console.warn('Failed to parse product images:', e);
@@ -222,7 +224,12 @@ export default function ProductDetailScreen({ route, navigation }) {
 
             if (imageUrls.length > 0) {
               return (
-                <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false}>
+                <ScrollView
+                  horizontal
+                  pagingEnabled
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.imageScroll}
+                >
                   {imageUrls.map((url, index) => (
                     <Image
                       key={index}
@@ -235,10 +242,10 @@ export default function ProductDetailScreen({ route, navigation }) {
               );
             } else {
               return (
-                <>
+                <View style={styles.placeholderContainer}>
                   <Text style={styles.imageGalleryPlaceholder}>📦</Text>
                   <Text style={styles.imageCount}>SEM FOTOS</Text>
-                </>
+                </View>
               );
             }
           })()}
@@ -447,6 +454,13 @@ const styles = StyleSheet.create({
     borderTopWidth: 3,
     borderBottomWidth: 3,
     borderColor: colors.yellow.primary,
+  },
+  imageScroll: {
+    width: '100%',
+  },
+  placeholderContainer: {
+    width: '100%',
+    height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
   },
