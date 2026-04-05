@@ -1995,9 +1995,9 @@ async def create_payment(
                 "email": current_user.email
             },
             "back_urls": {
-                "success": f"http://localhost:8000/payment/success",
-                "failure": f"http://localhost:8000/payment/failure",
-                "pending": f"http://localhost:8000/payment/pending"
+                "success": "https://gamer-marketplace.onrender.com/payment/success",
+                "failure": "https://gamer-marketplace.onrender.com/payment/failure",
+                "pending": "https://gamer-marketplace.onrender.com/payment/pending"
             },
             "auto_return": "approved",
             "external_reference": f"product_{product.id}_buyer_{current_user.id}",
