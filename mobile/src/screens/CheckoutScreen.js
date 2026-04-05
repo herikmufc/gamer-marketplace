@@ -9,8 +9,10 @@ import {
   Image,
   ActivityIndicator,
   Linking,
+  TextInput,
+  Modal,
 } from 'react-native';
-import { payment } from '../api/client';
+import { payment, shipping } from '../api/client';
 import { colors } from '../theme/colors';
 import RetroButton from '../components/RetroButton';
 import RetroCard from '../components/RetroCard';
@@ -21,13 +23,97 @@ export default function CheckoutScreen({ route, navigation }) {
   const [paymentMethod, setPaymentMethod] = useState('pix');
   const [paymentCreated, setPaymentCreated] = useState(null);
 
+  // Shipping states
+  const [addressModalVisible, setAddressModalVisible] = useState(false);
+  const [shippingOptions, setShippingOptions] = useState([]);
+  const [selectedShipping, setSelectedShipping] = useState(null);
+  const [loadingShipping, setLoadingShipping] = useState(false);
+  const [address, setAddress] = useState({
+    zipcode: '',
+    street: '',
+    number: '',
+    complement: '',
+    neighborhood: '',
+    city: '',
+    state: '',
+  });
+
+  useEffect(() => {
+    loadAddress();
+  }, []);
+
+  const loadAddress = async () => {
+    try {
+      const data = await shipping.getAddress();
+      if (data.zipcode) {
+        setAddress(data);
+        // Auto-calculate shipping if address exists
+        handleCalculateShipping(data.zipcode);
+      }
+    } catch (error) {
+      console.log('Nenhum endereço cadastrado ainda');
+    }
+  };
+
+  const handleSaveAddress = async () => {
+    try {
+      setLoadingShipping(true);
+      await shipping.updateAddress(address);
+      setAddressModalVisible(false);
+      Alert.alert('Sucesso', 'Endereço salvo com sucesso!');
+      // Calculate shipping after saving address
+      handleCalculateShipping(address.zipcode);
+    } catch (error) {
+      Alert.alert('Erro', 'Não foi possível salvar o endereço');
+    } finally {
+      setLoadingShipping(false);
+    }
+  };
+
+  const handleCalculateShipping = async (zipcode) => {
+    try {
+      setLoadingShipping(true);
+      const result = await shipping.calculateShipping(product.id, zipcode);
+      setShippingOptions(result.options || []);
+      // Auto-select first option
+      if (result.options && result.options.length > 0) {
+        setSelectedShipping(result.options[0]);
+      }
+    } catch (error) {
+      console.error('Erro ao calcular frete:', error);
+      Alert.alert('Erro', 'Não foi possível calcular o frete');
+    } finally {
+      setLoadingShipping(false);
+    }
+  };
+
+  const getTotalPrice = () => {
+    const productPrice = product.final_price || 0;
+    const shippingCost = selectedShipping?.cost || 0;
+    return productPrice + shippingCost;
+  };
+
   const handleCreatePayment = async () => {
+    // Validate address
+    if (!address.zipcode || !address.street || !address.number) {
+      Alert.alert('Atenção', 'Por favor, preencha seu endereço de entrega');
+      setAddressModalVisible(true);
+      return;
+    }
+
+    // Validate shipping selected
+    if (!selectedShipping) {
+      Alert.alert('Atenção', 'Por favor, selecione uma opção de frete');
+      return;
+    }
+
     try {
       setLoading(true);
 
       console.log('💳 Criando pagamento...', {
         productId: product.id,
         method: paymentMethod,
+        shipping: selectedShipping,
       });
 
       const result = await payment.create(product.id, paymentMethod);
@@ -211,6 +297,92 @@ export default function CheckoutScreen({ route, navigation }) {
         </RetroCard>
       </View>
 
+      {/* Endereço de Entrega */}
+      {!paymentCreated && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>📍 ENDEREÇO DE ENTREGA</Text>
+          {address.zipcode ? (
+            <RetroCard style={styles.addressCard}>
+              <Text style={styles.addressText}>
+                {address.street}, {address.number}
+                {address.complement ? ` - ${address.complement}` : ''}
+              </Text>
+              <Text style={styles.addressText}>
+                {address.neighborhood} - {address.city}/{address.state}
+              </Text>
+              <Text style={styles.addressText}>CEP: {address.zipcode}</Text>
+              <RetroButton
+                title="Alterar Endereço"
+                icon="✏️"
+                onPress={() => setAddressModalVisible(true)}
+                variant="secondary"
+                size="small"
+                style={{ marginTop: 12 }}
+              />
+            </RetroCard>
+          ) : (
+            <RetroButton
+              title="Cadastrar Endereço"
+              icon="📍"
+              onPress={() => setAddressModalVisible(true)}
+              variant="highlighted"
+              size="large"
+            />
+          )}
+        </View>
+      )}
+
+      {/* Opções de Frete */}
+      {!paymentCreated && address.zipcode && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>🚚 FRETE</Text>
+          {loadingShipping ? (
+            <RetroCard style={styles.loadingCard}>
+              <ActivityIndicator size="large" color={colors.yellow.primary} />
+              <Text style={styles.loadingText}>Calculando frete...</Text>
+            </RetroCard>
+          ) : shippingOptions.length > 0 ? (
+            shippingOptions.map((option, index) => (
+              <TouchableOpacity
+                key={index}
+                onPress={() => setSelectedShipping(option)}
+                activeOpacity={0.7}
+              >
+                <RetroCard
+                  variant={
+                    selectedShipping?.id === option.id ? 'highlighted' : 'default'
+                  }
+                  style={styles.shippingCard}
+                >
+                  <View style={styles.shippingContent}>
+                    <View style={styles.shippingInfo}>
+                      <Text style={styles.shippingName}>{option.name}</Text>
+                      <Text style={styles.shippingTime}>
+                        {option.estimated_delivery_time}
+                      </Text>
+                    </View>
+                    <View style={styles.shippingPrice}>
+                      <Text style={styles.shippingPriceValue}>
+                        R$ {option.cost?.toFixed(2) || '0.00'}
+                      </Text>
+                      {selectedShipping?.id === option.id && (
+                        <Text style={styles.checkIcon}>✓</Text>
+                      )}
+                    </View>
+                  </View>
+                </RetroCard>
+              </TouchableOpacity>
+            ))
+          ) : (
+            <RetroCard>
+              <Text style={styles.noShippingText}>
+                Cadastre seu endereço para calcular o frete
+              </Text>
+            </RetroCard>
+          )}
+        </View>
+      )}
+
       {/* Valores */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>💰 VALORES</Text>
@@ -221,11 +393,19 @@ export default function CheckoutScreen({ route, navigation }) {
               R$ {product.final_price?.toFixed(2) || '0.00'}
             </Text>
           </View>
+          {selectedShipping && (
+            <View style={styles.priceRow}>
+              <Text style={styles.priceLabel}>Frete ({selectedShipping.name}):</Text>
+              <Text style={styles.priceValue}>
+                R$ {selectedShipping.cost?.toFixed(2) || '0.00'}
+              </Text>
+            </View>
+          )}
           <View style={styles.priceDivider} />
           <View style={styles.priceRow}>
             <Text style={styles.priceLabelTotal}>TOTAL:</Text>
             <Text style={styles.priceValueTotal}>
-              R$ {product.final_price?.toFixed(2) || '0.00'}
+              R$ {getTotalPrice().toFixed(2)}
             </Text>
           </View>
         </RetroCard>
@@ -335,6 +515,125 @@ export default function CheckoutScreen({ route, navigation }) {
       )}
 
       <View style={{ height: 40 }} />
+
+      {/* Address Modal */}
+      <Modal
+        visible={addressModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setAddressModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <ScrollView style={styles.modalScroll}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>📍 Endereço de Entrega</Text>
+                <TouchableOpacity
+                  onPress={() => setAddressModalVisible(false)}
+                  style={styles.modalCloseButton}
+                >
+                  <Text style={styles.modalCloseText}>✕</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>CEP *</Text>
+                <TextInput
+                  style={styles.input}
+                  value={address.zipcode}
+                  onChangeText={(text) => setAddress({ ...address, zipcode: text })}
+                  placeholder="00000-000"
+                  keyboardType="numeric"
+                  maxLength={9}
+                />
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Rua/Avenida *</Text>
+                <TextInput
+                  style={styles.input}
+                  value={address.street}
+                  onChangeText={(text) => setAddress({ ...address, street: text })}
+                  placeholder="Nome da rua"
+                />
+              </View>
+
+              <View style={styles.formRow}>
+                <View style={styles.formGroupHalf}>
+                  <Text style={styles.label}>Número *</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={address.number}
+                    onChangeText={(text) => setAddress({ ...address, number: text })}
+                    placeholder="123"
+                    keyboardType="numeric"
+                  />
+                </View>
+
+                <View style={styles.formGroupHalf}>
+                  <Text style={styles.label}>Complemento</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={address.complement}
+                    onChangeText={(text) =>
+                      setAddress({ ...address, complement: text })
+                    }
+                    placeholder="Apto, bloco..."
+                  />
+                </View>
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Bairro *</Text>
+                <TextInput
+                  style={styles.input}
+                  value={address.neighborhood}
+                  onChangeText={(text) =>
+                    setAddress({ ...address, neighborhood: text })
+                  }
+                  placeholder="Nome do bairro"
+                />
+              </View>
+
+              <View style={styles.formRow}>
+                <View style={styles.formGroupLarge}>
+                  <Text style={styles.label}>Cidade *</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={address.city}
+                    onChangeText={(text) => setAddress({ ...address, city: text })}
+                    placeholder="Nome da cidade"
+                  />
+                </View>
+
+                <View style={styles.formGroupSmall}>
+                  <Text style={styles.label}>UF *</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={address.state}
+                    onChangeText={(text) =>
+                      setAddress({ ...address, state: text.toUpperCase() })
+                    }
+                    placeholder="SP"
+                    maxLength={2}
+                    autoCapitalize="characters"
+                  />
+                </View>
+              </View>
+
+              <RetroButton
+                title="Salvar Endereço"
+                icon="✅"
+                onPress={handleSaveAddress}
+                loading={loadingShipping}
+                variant="primary"
+                size="large"
+                style={{ marginTop: 20, marginBottom: 20 }}
+              />
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -608,5 +907,139 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
     textAlign: 'center',
     marginBottom: 20,
+  },
+  addressCard: {
+    padding: 16,
+  },
+  addressText: {
+    fontSize: 14,
+    color: colors.text.primary,
+    marginBottom: 4,
+  },
+  shippingCard: {
+    marginBottom: 12,
+    padding: 16,
+  },
+  shippingContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  shippingInfo: {
+    flex: 1,
+  },
+  shippingName: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: colors.text.primary,
+    marginBottom: 4,
+  },
+  shippingTime: {
+    fontSize: 12,
+    color: colors.text.muted,
+  },
+  shippingPrice: {
+    alignItems: 'flex-end',
+  },
+  shippingPriceValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.yellow.primary,
+  },
+  loadingCard: {
+    padding: 32,
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 14,
+    color: colors.text.secondary,
+    marginTop: 12,
+  },
+  noShippingText: {
+    fontSize: 14,
+    color: colors.text.muted,
+    textAlign: 'center',
+    padding: 20,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: colors.background.secondary,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '90%',
+    borderTopWidth: 3,
+    borderLeftWidth: 3,
+    borderRightWidth: 3,
+    borderColor: colors.yellow.primary,
+  },
+  modalScroll: {
+    padding: 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.yellow.primary,
+    letterSpacing: 1,
+  },
+  modalCloseButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.background.tertiary,
+    borderWidth: 2,
+    borderColor: colors.border.dark,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalCloseText: {
+    fontSize: 18,
+    color: colors.text.primary,
+    fontWeight: 'bold',
+  },
+  formGroup: {
+    marginBottom: 16,
+  },
+  formRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  formGroupHalf: {
+    flex: 1,
+    marginBottom: 16,
+  },
+  formGroupLarge: {
+    flex: 2,
+    marginBottom: 16,
+  },
+  formGroupSmall: {
+    flex: 1,
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: colors.yellow.primary,
+    marginBottom: 8,
+    letterSpacing: 0.5,
+  },
+  input: {
+    backgroundColor: colors.background.tertiary,
+    borderWidth: 2,
+    borderColor: colors.border.dark,
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 14,
+    color: colors.text.primary,
   },
 });

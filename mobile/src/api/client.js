@@ -548,5 +548,47 @@ export const chat = {
   },
 };
 
+// Shipping API
+export const shipping = {
+  getAddress: async () => {
+    try {
+      console.log('📍 [SHIPPING] Buscando endereço...');
+      const response = await apiClient.get('/user/address');
+      console.log('✅ [SHIPPING] Endereço obtido:', response.status);
+      return response.data;
+    } catch (error) {
+      console.error('❌ [SHIPPING] Erro ao buscar endereço:', error.message);
+      throw error;
+    }
+  },
+
+  updateAddress: async (addressData) => {
+    try {
+      console.log('📍 [SHIPPING] Atualizando endereço...', addressData);
+      const response = await apiClient.put('/user/address', addressData);
+      console.log('✅ [SHIPPING] Endereço atualizado:', response.status);
+      return response.data;
+    } catch (error) {
+      console.error('❌ [SHIPPING] Erro ao atualizar endereço:', error.message);
+      throw error;
+    }
+  },
+
+  calculateShipping: async (productId, zipcode) => {
+    try {
+      console.log('📦 [SHIPPING] Calculando frete...', { productId, zipcode });
+      const response = await apiClient.post('/shipping/calculate', {
+        product_id: productId,
+        zipcode: zipcode,
+      });
+      console.log('✅ [SHIPPING] Frete calculado:', response.status);
+      return response.data;
+    } catch (error) {
+      console.error('❌ [SHIPPING] Erro ao calcular frete:', error.message);
+      throw error;
+    }
+  },
+};
+
 export const api = apiClient;
 export default apiClient;

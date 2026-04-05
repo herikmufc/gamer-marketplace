@@ -19,6 +19,7 @@ import mercadopago
 import gemini_client
 from maintenance_assistant import maintenance_assistant
 import supabase_client
+from mercado_envios_client import MercadoEnviosClient
 import os
 import base64
 import re
@@ -122,6 +123,15 @@ class User(Base):
     mp_user_id = Column(String, nullable=True)  # ID do usuário no Mercado Pago
     mp_public_key = Column(String, nullable=True)  # Public key do vendedor
     mp_connected_at = Column(DateTime, nullable=True)  # Quando conectou a conta MP
+
+    # Endereço para entrega (Mercado Envios)
+    address_zipcode = Column(String(10), nullable=True)  # CEP
+    address_street = Column(String(255), nullable=True)  # Rua/Avenida
+    address_number = Column(String(20), nullable=True)  # Número
+    address_complement = Column(String(100), nullable=True)  # Complemento/Apto
+    address_neighborhood = Column(String(100), nullable=True)  # Bairro
+    address_city = Column(String(100), nullable=True)  # Cidade
+    address_state = Column(String(2), nullable=True)  # UF (SP, RJ, etc)
 
     products = relationship("Product", back_populates="owner")
 
@@ -307,6 +317,24 @@ class Transaction(Base):
     tracking_code = Column(String, nullable=True)  # Código de rastreio dos Correios
     shipped_at = Column(DateTime, nullable=True)
     delivered_at = Column(DateTime, nullable=True)
+
+    # Mercado Envios (Shipping)
+    shipping_id = Column(String, nullable=True)  # ID do envio no Mercado Envios
+    shipping_mode = Column(String, nullable=True)  # me2 (Mercado Envios)
+    shipping_method = Column(String, nullable=True)  # standard, express, etc
+    shipping_cost = Column(Float, nullable=True)  # Custo do frete
+    shipping_carrier = Column(String, nullable=True)  # Transportadora (Correios, etc)
+    shipping_estimated_delivery = Column(DateTime, nullable=True)  # Previsão de entrega
+    shipping_label_url = Column(String, nullable=True)  # URL da etiqueta de envio
+
+    # Endereço de entrega (snapshot do momento da compra)
+    delivery_zipcode = Column(String(10), nullable=True)
+    delivery_street = Column(String(255), nullable=True)
+    delivery_number = Column(String(20), nullable=True)
+    delivery_complement = Column(String(100), nullable=True)
+    delivery_neighborhood = Column(String(100), nullable=True)
+    delivery_city = Column(String(100), nullable=True)
+    delivery_state = Column(String(2), nullable=True)
 
     # Reclamações
     dispute_reason = Column(Text, nullable=True)
@@ -2194,6 +2222,131 @@ def calculate_business_days(start_date: datetime, days: int) -> datetime:
             days_added += 1
 
     return current_date
+
+# ============================================
+# ENDPOINTS - SHIPPING / MERCADO ENVIOS
+# ============================================
+
+class AddressUpdate(BaseModel):
+    address_zipcode: str
+    address_street: str
+    address_number: str
+    address_complement: Optional[str] = None
+    address_neighborhood: str
+    address_city: str
+    address_state: str
+
+class ShippingCalculate(BaseModel):
+    product_id: int
+    zipcode: str  # CEP do comprador
+
+@app.get("/user/address")
+async def get_user_address(current_user: User = Depends(get_current_user)):
+    """Retorna endereço salvo do usuário"""
+    return {
+        "zipcode": current_user.address_zipcode,
+        "street": current_user.address_street,
+        "number": current_user.address_number,
+        "complement": current_user.address_complement,
+        "neighborhood": current_user.address_neighborhood,
+        "city": current_user.address_city,
+        "state": current_user.address_state,
+    }
+
+@app.put("/user/address")
+async def update_user_address(
+    address: AddressUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Atualiza endereço do usuário"""
+    current_user.address_zipcode = address.address_zipcode
+    current_user.address_street = address.address_street
+    current_user.address_number = address.address_number
+    current_user.address_complement = address.address_complement
+    current_user.address_neighborhood = address.address_neighborhood
+    current_user.address_city = address.address_city
+    current_user.address_state = address.address_state
+
+    db.commit()
+    print(f"✅ Endereço atualizado para usuário {current_user.username}")
+
+    return {"message": "Endereço atualizado com sucesso"}
+
+@app.post("/shipping/calculate")
+async def calculate_shipping(
+    shipping_data: ShippingCalculate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Calcula opções de frete disponíveis para um produto
+    """
+    try:
+        # Buscar produto
+        product = db.query(Product).filter(Product.id == shipping_data.product_id).first()
+        if not product:
+            raise HTTPException(status_code=404, detail="Produto não encontrado")
+
+        # Buscar vendedor
+        seller = db.query(User).filter(User.id == product.owner_id).first()
+        if not seller or not seller.address_zipcode:
+            raise HTTPException(
+                status_code=400,
+                detail="Vendedor precisa cadastrar endereço de envio"
+            )
+
+        # Inicializar cliente Mercado Envios
+        if not MERCADOPAGO_ACCESS_TOKEN:
+            raise HTTPException(status_code=500, detail="Mercado Pago não configurado")
+
+        me_client = MercadoEnviosClient(MERCADOPAGO_ACCESS_TOKEN)
+
+        # Dimensões padrão para jogos/consoles
+        # TODO: Permitir que vendedor configure dimensões do produto
+        dimensions = {
+            "weight": 500,  # 500g padrão
+            "length": 20,   # 20cm
+            "width": 15,    # 15cm
+            "height": 10    # 10cm
+        }
+
+        # Calcular frete
+        options = me_client.calculate_shipping(
+            from_zipcode=seller.address_zipcode,
+            to_zipcode=shipping_data.zipcode,
+            dimensions=dimensions,
+            free_shipping=False
+        )
+
+        if not options:
+            # Fallback: retornar opções de exemplo dos Correios
+            print("⚠️ Mercado Envios não retornou opções, usando fallback")
+            options = [
+                {
+                    "id": "correios_pac",
+                    "name": "PAC - Correios",
+                    "estimated_delivery_time": "10-15 dias úteis",
+                    "cost": 15.00,
+                    "carrier": "Correios"
+                },
+                {
+                    "id": "correios_sedex",
+                    "name": "SEDEX - Correios",
+                    "estimated_delivery_time": "3-5 dias úteis",
+                    "cost": 25.00,
+                    "carrier": "Correios"
+                }
+            ]
+
+        print(f"✅ {len(options)} opções de frete calculadas")
+        return {"options": options}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Erro ao calcular frete: {e}")
+        raise HTTPException(status_code=500, detail=f"Erro ao calcular frete: {str(e)}")
 
 @app.post("/payment/create", response_model=PaymentResponse)
 async def create_payment(
