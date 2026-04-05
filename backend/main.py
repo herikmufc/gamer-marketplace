@@ -800,6 +800,73 @@ async def mercadopago_disconnect(
 # ENDPOINTS - HEALTH CHECK
 # ============================================
 
+@app.get("/run-mp-migration")
+def run_mp_migration():
+    """
+    TEMPORÁRIO: Executa migration do Mercado Pago Marketplace
+    Acesse via: https://gamer-marketplace.onrender.com/run-mp-migration
+    """
+    try:
+        import sqlite3
+        from pathlib import Path
+
+        db_path = Path(__file__).parent / "gamer_marketplace.db"
+
+        if not db_path.exists():
+            return {
+                "status": "error",
+                "message": f"Database not found at {db_path}"
+            }
+
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+
+        # Check existing columns
+        cursor.execute("PRAGMA table_info(users)")
+        columns = [col[1] for col in cursor.fetchall()]
+
+        migrations_needed = []
+        migrations_executed = []
+
+        new_columns = {
+            'mp_access_token': 'ALTER TABLE users ADD COLUMN mp_access_token TEXT',
+            'mp_refresh_token': 'ALTER TABLE users ADD COLUMN mp_refresh_token TEXT',
+            'mp_user_id': 'ALTER TABLE users ADD COLUMN mp_user_id TEXT',
+            'mp_public_key': 'ALTER TABLE users ADD COLUMN mp_public_key TEXT',
+            'mp_connected_at': 'ALTER TABLE users ADD COLUMN mp_connected_at DATETIME'
+        }
+
+        for col_name, sql in new_columns.items():
+            if col_name not in columns:
+                migrations_needed.append(sql)
+
+        if not migrations_needed:
+            return {
+                "status": "success",
+                "message": "All Mercado Pago fields already exist. No migration needed.",
+                "columns_checked": list(new_columns.keys())
+            }
+
+        # Execute migrations
+        for migration_sql in migrations_needed:
+            cursor.execute(migration_sql)
+            migrations_executed.append(migration_sql)
+
+        conn.commit()
+        conn.close()
+
+        return {
+            "status": "success",
+            "message": f"Migration completed! Added {len(migrations_executed)} new columns.",
+            "migrations_executed": migrations_executed
+        }
+
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e)
+        }
+
 @app.get("/health")
 def health_check():
     """Health check endpoint"""
@@ -810,7 +877,8 @@ def health_check():
         "gemini_model": "gemini-2.5-flash",
         "mercadopago": "configured" if mp_sdk else "not_configured",
         "mercadopago_token_present": bool(MERCADOPAGO_ACCESS_TOKEN),
-        "version": "2.0.2",
+        "mercadopago_oauth": "configured" if MERCADOPAGO_APP_ID and MERCADOPAGO_CLIENT_SECRET else "not_configured",
+        "version": "2.0.3",
         "build": "2026-04-05",
         "timestamp": datetime.utcnow().isoformat()
     }
