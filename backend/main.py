@@ -899,6 +899,123 @@ def run_mp_migration():
             "traceback": traceback.format_exc()
         }
 
+@app.get("/run-shipping-migration")
+def run_shipping_migration():
+    """
+    TEMPORÁRIO: Executa migration dos campos de endereço e frete
+    Acesse via: https://gamer-marketplace.onrender.com/run-shipping-migration
+    """
+    try:
+        from sqlalchemy import text, inspect
+
+        inspector = inspect(engine)
+        users_columns = [col['name'] for col in inspector.get_columns('users')]
+        transactions_columns = [col['name'] for col in inspector.get_columns('transactions')]
+
+        migrations_needed = []
+        migrations_executed = []
+
+        # Definir SQL apropriado para cada tipo de banco
+        if USE_SUPABASE or 'postgresql' in str(engine.url):
+            # PostgreSQL - Address fields in users table
+            user_address_fields = {
+                'address_zipcode': 'ALTER TABLE users ADD COLUMN address_zipcode VARCHAR(10)',
+                'address_street': 'ALTER TABLE users ADD COLUMN address_street VARCHAR(255)',
+                'address_number': 'ALTER TABLE users ADD COLUMN address_number VARCHAR(20)',
+                'address_complement': 'ALTER TABLE users ADD COLUMN address_complement VARCHAR(100)',
+                'address_neighborhood': 'ALTER TABLE users ADD COLUMN address_neighborhood VARCHAR(100)',
+                'address_city': 'ALTER TABLE users ADD COLUMN address_city VARCHAR(100)',
+                'address_state': 'ALTER TABLE users ADD COLUMN address_state VARCHAR(2)',
+            }
+
+            # PostgreSQL - Shipping fields in transactions table
+            transaction_shipping_fields = {
+                'shipping_id': 'ALTER TABLE transactions ADD COLUMN shipping_id VARCHAR',
+                'shipping_mode': 'ALTER TABLE transactions ADD COLUMN shipping_mode VARCHAR',
+                'shipping_method': 'ALTER TABLE transactions ADD COLUMN shipping_method VARCHAR',
+                'shipping_cost': 'ALTER TABLE transactions ADD COLUMN shipping_cost FLOAT',
+                'shipping_carrier': 'ALTER TABLE transactions ADD COLUMN shipping_carrier VARCHAR',
+                'shipping_estimated_delivery': 'ALTER TABLE transactions ADD COLUMN shipping_estimated_delivery TIMESTAMP',
+                'shipping_label_url': 'ALTER TABLE transactions ADD COLUMN shipping_label_url VARCHAR',
+                'delivery_zipcode': 'ALTER TABLE transactions ADD COLUMN delivery_zipcode VARCHAR(10)',
+                'delivery_street': 'ALTER TABLE transactions ADD COLUMN delivery_street VARCHAR(255)',
+                'delivery_number': 'ALTER TABLE transactions ADD COLUMN delivery_number VARCHAR(20)',
+                'delivery_complement': 'ALTER TABLE transactions ADD COLUMN delivery_complement VARCHAR(100)',
+                'delivery_neighborhood': 'ALTER TABLE transactions ADD COLUMN delivery_neighborhood VARCHAR(100)',
+                'delivery_city': 'ALTER TABLE transactions ADD COLUMN delivery_city VARCHAR(100)',
+                'delivery_state': 'ALTER TABLE transactions ADD COLUMN delivery_state VARCHAR(2)',
+            }
+        else:
+            # SQLite
+            user_address_fields = {
+                'address_zipcode': 'ALTER TABLE users ADD COLUMN address_zipcode VARCHAR(10)',
+                'address_street': 'ALTER TABLE users ADD COLUMN address_street VARCHAR(255)',
+                'address_number': 'ALTER TABLE users ADD COLUMN address_number VARCHAR(20)',
+                'address_complement': 'ALTER TABLE users ADD COLUMN address_complement VARCHAR(100)',
+                'address_neighborhood': 'ALTER TABLE users ADD COLUMN address_neighborhood VARCHAR(100)',
+                'address_city': 'ALTER TABLE users ADD COLUMN address_city VARCHAR(100)',
+                'address_state': 'ALTER TABLE users ADD COLUMN address_state VARCHAR(2)',
+            }
+
+            transaction_shipping_fields = {
+                'shipping_id': 'ALTER TABLE transactions ADD COLUMN shipping_id VARCHAR',
+                'shipping_mode': 'ALTER TABLE transactions ADD COLUMN shipping_mode VARCHAR',
+                'shipping_method': 'ALTER TABLE transactions ADD COLUMN shipping_method VARCHAR',
+                'shipping_cost': 'ALTER TABLE transactions ADD COLUMN shipping_cost FLOAT',
+                'shipping_carrier': 'ALTER TABLE transactions ADD COLUMN shipping_carrier VARCHAR',
+                'shipping_estimated_delivery': 'ALTER TABLE transactions ADD COLUMN shipping_estimated_delivery DATETIME',
+                'shipping_label_url': 'ALTER TABLE transactions ADD COLUMN shipping_label_url VARCHAR',
+                'delivery_zipcode': 'ALTER TABLE transactions ADD COLUMN delivery_zipcode VARCHAR(10)',
+                'delivery_street': 'ALTER TABLE transactions ADD COLUMN delivery_street VARCHAR(255)',
+                'delivery_number': 'ALTER TABLE transactions ADD COLUMN delivery_number VARCHAR(20)',
+                'delivery_complement': 'ALTER TABLE transactions ADD COLUMN delivery_complement VARCHAR(100)',
+                'delivery_neighborhood': 'ALTER TABLE transactions ADD COLUMN delivery_neighborhood VARCHAR(100)',
+                'delivery_city': 'ALTER TABLE transactions ADD COLUMN delivery_city VARCHAR(100)',
+                'delivery_state': 'ALTER TABLE transactions ADD COLUMN delivery_state VARCHAR(2)',
+            }
+
+        # Check users table
+        for col_name, sql in user_address_fields.items():
+            if col_name not in users_columns:
+                migrations_needed.append(sql)
+
+        # Check transactions table
+        for col_name, sql in transaction_shipping_fields.items():
+            if col_name not in transactions_columns:
+                migrations_needed.append(sql)
+
+        if not migrations_needed:
+            return {
+                "status": "success",
+                "message": "All shipping/address fields already exist. No migration needed.",
+                "database_type": "PostgreSQL/Supabase" if USE_SUPABASE else "SQLite",
+                "users_columns_checked": list(user_address_fields.keys()),
+                "transactions_columns_checked": list(transaction_shipping_fields.keys()),
+            }
+
+        # Execute migrations
+        with engine.connect() as conn:
+            for migration_sql in migrations_needed:
+                conn.execute(text(migration_sql))
+                migrations_executed.append(migration_sql)
+            conn.commit()
+
+        return {
+            "status": "success",
+            "message": f"✅ Migration completed! Added {len(migrations_executed)} new columns.",
+            "database_type": "PostgreSQL/Supabase" if USE_SUPABASE else "SQLite",
+            "total_columns_added": len(migrations_executed),
+            "migrations_executed": migrations_executed
+        }
+
+    except Exception as e:
+        import traceback
+        return {
+            "status": "error",
+            "message": str(e),
+            "traceback": traceback.format_exc()
+        }
+
 @app.get("/health")
 def health_check():
     """Health check endpoint"""
