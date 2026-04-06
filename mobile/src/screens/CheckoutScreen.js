@@ -45,25 +45,49 @@ export default function CheckoutScreen({ route, navigation }) {
   const loadAddress = async () => {
     try {
       const data = await shipping.getAddress();
-      if (data.zipcode) {
-        setAddress(data);
+      console.log('📍 Address loaded:', data);
+
+      // Backend returns with address_ prefix, convert to local state format
+      if (data && data.zipcode) {
+        setAddress({
+          zipcode: data.zipcode,
+          street: data.street,
+          number: data.number,
+          complement: data.complement,
+          neighborhood: data.neighborhood,
+          city: data.city,
+          state: data.state,
+        });
         // Auto-calculate shipping if address exists
         handleCalculateShipping(data.zipcode);
       }
     } catch (error) {
-      console.log('Nenhum endereço cadastrado ainda');
+      console.log('Nenhum endereço cadastrado ainda:', error);
     }
   };
 
   const handleSaveAddress = async () => {
     try {
       setLoadingShipping(true);
-      await shipping.updateAddress(address);
+
+      // Transform address to backend format (with address_ prefix)
+      const addressPayload = {
+        address_zipcode: address.zipcode,
+        address_street: address.street,
+        address_number: address.number,
+        address_complement: address.complement,
+        address_neighborhood: address.neighborhood,
+        address_city: address.city,
+        address_state: address.state,
+      };
+
+      await shipping.updateAddress(addressPayload);
       setAddressModalVisible(false);
       Alert.alert('Sucesso', 'Endereço salvo com sucesso!');
       // Calculate shipping after saving address
       handleCalculateShipping(address.zipcode);
     } catch (error) {
+      console.error('Erro ao salvar endereço:', error);
       Alert.alert('Erro', 'Não foi possível salvar o endereço');
     } finally {
       setLoadingShipping(false);
@@ -73,15 +97,21 @@ export default function CheckoutScreen({ route, navigation }) {
   const handleCalculateShipping = async (zipcode) => {
     try {
       setLoadingShipping(true);
+      console.log('📦 Calculando frete...', { productId: product.id, zipcode });
+
       const result = await shipping.calculateShipping(product.id, zipcode);
+      console.log('✅ Resultado do frete:', result);
+
       setShippingOptions(result.options || []);
       // Auto-select first option
       if (result.options && result.options.length > 0) {
         setSelectedShipping(result.options[0]);
+        console.log('✅ Opção de frete selecionada:', result.options[0]);
       }
     } catch (error) {
-      console.error('Erro ao calcular frete:', error);
-      Alert.alert('Erro', 'Não foi possível calcular o frete');
+      console.error('❌ Erro ao calcular frete:', error);
+      console.error('❌ Error response:', error.response?.data);
+      Alert.alert('Erro', error.response?.data?.detail || 'Não foi possível calcular o frete');
     } finally {
       setLoadingShipping(false);
     }
