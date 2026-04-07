@@ -334,13 +334,13 @@ export default function CheckoutScreen({ route, navigation }) {
           {address.zipcode ? (
             <RetroCard style={styles.addressCard}>
               <Text style={styles.addressText}>
-                {address.street}, {address.number}
+                {address.street || 'Sem rua'}, {address.number || 'S/N'}
                 {address.complement ? ` - ${address.complement}` : ''}
               </Text>
               <Text style={styles.addressText}>
-                {address.neighborhood} - {address.city}/{address.state}
+                {address.neighborhood || 'Sem bairro'} - {address.city || 'Sem cidade'}/{address.state || 'XX'}
               </Text>
-              <Text style={styles.addressText}>CEP: {address.zipcode}</Text>
+              <Text style={styles.addressText}>CEP: {address.zipcode || '00000-000'}</Text>
               <RetroButton
                 title="Alterar Endereço"
                 icon="✏️"
@@ -386,9 +386,9 @@ export default function CheckoutScreen({ route, navigation }) {
                 >
                   <View style={styles.shippingContent}>
                     <View style={styles.shippingInfo}>
-                      <Text style={styles.shippingName}>{option.name}</Text>
+                      <Text style={styles.shippingName}>{option.name || 'Método de envio'}</Text>
                       <Text style={styles.shippingTime}>
-                        {option.estimated_delivery_time}
+                        {option.estimated_delivery_time || 'Prazo não informado'}
                       </Text>
                     </View>
                     <View style={styles.shippingPrice}>
@@ -425,7 +425,7 @@ export default function CheckoutScreen({ route, navigation }) {
           </View>
           {selectedShipping && (
             <View style={styles.priceRow}>
-              <Text style={styles.priceLabel}>Frete ({selectedShipping.name}):</Text>
+              <Text style={styles.priceLabel}>Frete ({selectedShipping.name || 'Envio'}):</Text>
               <Text style={styles.priceValue}>
                 R$ {selectedShipping.cost?.toFixed(2) || '0.00'}
               </Text>
