@@ -28,6 +28,7 @@ export default function CheckoutScreen({ route, navigation }) {
   const [shippingOptions, setShippingOptions] = useState([]);
   const [selectedShipping, setSelectedShipping] = useState(null);
   const [loadingShipping, setLoadingShipping] = useState(false);
+  const [shippingError, setShippingError] = useState(null);
   const [address, setAddress] = useState({
     zipcode: '',
     street: '',
@@ -97,6 +98,7 @@ export default function CheckoutScreen({ route, navigation }) {
   const handleCalculateShipping = async (zipcode) => {
     try {
       setLoadingShipping(true);
+      setShippingError(null);
       console.log('📦 Calculando frete...', { productId: product.id, zipcode });
 
       const result = await shipping.calculateShipping(product.id, zipcode);
@@ -107,11 +109,15 @@ export default function CheckoutScreen({ route, navigation }) {
       if (result.options && result.options.length > 0) {
         setSelectedShipping(result.options[0]);
         console.log('✅ Opção de frete selecionada:', result.options[0]);
+      } else {
+        setShippingError('Nenhuma opção de frete disponível');
       }
     } catch (error) {
       console.error('❌ Erro ao calcular frete:', error);
       console.error('❌ Error response:', error.response?.data);
-      Alert.alert('Erro', error.response?.data?.detail || 'Não foi possível calcular o frete');
+      const errorMessage = error.response?.data?.detail || 'Não foi possível calcular o frete';
+      setShippingError(errorMessage);
+      Alert.alert('Erro no Frete', errorMessage);
     } finally {
       setLoadingShipping(false);
     }
@@ -371,6 +377,19 @@ export default function CheckoutScreen({ route, navigation }) {
               <ActivityIndicator size="large" color={colors.yellow.primary} />
               <Text style={styles.loadingText}>Calculando frete...</Text>
             </RetroCard>
+          ) : shippingError ? (
+            <RetroCard variant="danger" style={styles.errorCard}>
+              <Text style={styles.errorIcon}>⚠️</Text>
+              <Text style={styles.errorText}>{shippingError}</Text>
+              <RetroButton
+                title="Tentar Novamente"
+                icon="🔄"
+                onPress={() => handleCalculateShipping(address.zipcode)}
+                variant="secondary"
+                size="small"
+                style={{ marginTop: 12 }}
+              />
+            </RetroCard>
           ) : shippingOptions.length > 0 ? (
             shippingOptions.map((option, index) => (
               <TouchableOpacity
@@ -406,7 +425,7 @@ export default function CheckoutScreen({ route, navigation }) {
           ) : (
             <RetroCard>
               <Text style={styles.noShippingText}>
-                Cadastre seu endereço para calcular o frete
+                Aguardando cálculo de frete...
               </Text>
             </RetroCard>
           )}
@@ -990,6 +1009,20 @@ const styles = StyleSheet.create({
     color: colors.text.muted,
     textAlign: 'center',
     padding: 20,
+  },
+  errorCard: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  errorIcon: {
+    fontSize: 32,
+    marginBottom: 12,
+  },
+  errorText: {
+    fontSize: 14,
+    color: colors.text.primary,
+    textAlign: 'center',
+    marginBottom: 8,
   },
   modalOverlay: {
     flex: 1,
