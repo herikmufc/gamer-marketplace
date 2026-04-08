@@ -1032,6 +1032,93 @@ def run_shipping_migration():
             "traceback": traceback.format_exc()
         }
 
+@app.get("/add-addresses-to-existing-users")
+def add_addresses_to_existing_users(db: Session = Depends(get_db)):
+    """
+    TEMPORÁRIO: Adiciona endereços fictícios aos usuários que não têm endereço
+    Acesse via: https://gamer-marketplace.onrender.com/add-addresses-to-existing-users
+    """
+    try:
+        # Endereços fictícios em Niterói/RJ
+        addresses = [
+            {
+                "zipcode": "24120200",
+                "street": "Rua Moreira César",
+                "number": "157",
+                "complement": "Apt 302",
+                "neighborhood": "Icaraí",
+                "city": "Niterói",
+                "state": "RJ"
+            },
+            {
+                "zipcode": "24230090",
+                "street": "Rua Miguel de Frias",
+                "number": "89",
+                "complement": None,
+                "neighborhood": "Ingá",
+                "city": "Niterói",
+                "state": "RJ"
+            },
+            {
+                "zipcode": "24360440",
+                "street": "Rua Gavião Peixoto",
+                "number": "245",
+                "complement": "Casa 2",
+                "neighborhood": "São Francisco",
+                "city": "Niterói",
+                "state": "RJ"
+            },
+        ]
+
+        # Buscar usuários sem endereço
+        users = db.query(User).filter(
+            (User.address_zipcode == None) | (User.address_zipcode == "")
+        ).all()
+
+        if not users:
+            return {
+                "status": "success",
+                "message": "Todos os usuários já têm endereço cadastrado",
+                "users_updated": 0
+            }
+
+        updated_users = []
+        for idx, user in enumerate(users):
+            # Pegar endereço baseado no índice (circular)
+            address = addresses[idx % len(addresses)]
+
+            # Atualizar usuário
+            user.address_zipcode = address["zipcode"]
+            user.address_street = address["street"]
+            user.address_number = address["number"]
+            user.address_complement = address["complement"]
+            user.address_neighborhood = address["neighborhood"]
+            user.address_city = address["city"]
+            user.address_state = address["state"]
+
+            updated_users.append({
+                "username": user.username,
+                "email": user.email,
+                "address": f"{address['street']}, {address['number']} - {address['neighborhood']}, {address['city']}/{address['state']}"
+            })
+
+        db.commit()
+
+        return {
+            "status": "success",
+            "message": f"✅ Endereços adicionados para {len(users)} usuários",
+            "users_updated": len(users),
+            "details": updated_users
+        }
+
+    except Exception as e:
+        import traceback
+        return {
+            "status": "error",
+            "message": str(e),
+            "traceback": traceback.format_exc()
+        }
+
 @app.get("/health")
 def health_check():
     """Health check endpoint"""
