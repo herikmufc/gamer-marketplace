@@ -376,6 +376,14 @@ class UserCreate(BaseModel):
     full_name: str
     cpf: str  # NOVO: Obrigatório
     phone: Optional[str]
+    # Endereço obrigatório para cálculo de frete
+    address_zipcode: str
+    address_street: str
+    address_number: str
+    address_complement: Optional[str] = None
+    address_neighborhood: str
+    address_city: str
+    address_state: str
 
 class UserResponse(BaseModel):
     model_config = {"from_attributes": True}
@@ -628,7 +636,15 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
             hashed_password=get_password_hash(user.password),
             full_name=user.full_name,
             terms_accepted_at=datetime.utcnow(),  # Aceite de termos
-            terms_version="1.0.0"
+            terms_version="1.0.0",
+            # Endereço para cálculo de frete
+            address_zipcode=user.address_zipcode,
+            address_street=user.address_street,
+            address_number=user.address_number,
+            address_complement=user.address_complement,
+            address_neighborhood=user.address_neighborhood,
+            address_city=user.address_city,
+            address_state=user.address_state,
         )
         db.add(db_user)
         db.commit()
