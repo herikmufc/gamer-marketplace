@@ -247,51 +247,91 @@ export default function CheckoutScreen({ route, navigation }) {
 
         {paymentCreated.init_point && (
           <>
-            <Text style={styles.debugText}>
-              🔍 Link de pagamento:{'\n'}
-              {paymentCreated.init_point.substring(0, 50)}...
-            </Text>
+            <View style={styles.linkContainer}>
+              <Text style={styles.linkLabel}>🔗 Link de Pagamento:</Text>
+              <TouchableOpacity
+                onPress={() => {
+                  Alert.alert(
+                    'Link Completo',
+                    paymentCreated.init_point,
+                    [
+                      {
+                        text: 'Fechar',
+                        style: 'cancel'
+                      },
+                      {
+                        text: 'Abrir no Navegador',
+                        onPress: () => Linking.openURL(paymentCreated.init_point)
+                      }
+                    ]
+                  );
+                }}
+                style={styles.linkBox}
+              >
+                <Text style={styles.linkText} numberOfLines={2}>
+                  {paymentCreated.init_point}
+                </Text>
+                <Text style={styles.linkHint}>👆 Toque para ver/copiar o link completo</Text>
+              </TouchableOpacity>
+            </View>
+
             <RetroButton
-              title="Ir para Pagamento"
-              icon="🔗"
+              title="🌐 Abrir Pagamento no Navegador"
               onPress={async () => {
                 try {
-                  console.log('🔗 Tentando abrir Mercado Pago...');
-                  console.log('📱 Preference ID:', paymentCreated.mp_preference_id);
-                  console.log('🌐 Init Point:', paymentCreated.init_point);
+                  console.log('🔗 Abrindo link direto no navegador...');
+                  console.log('🌐 URL:', paymentCreated.init_point);
 
-                  // Tentar abrir o app do Mercado Pago primeiro
-                  if (paymentCreated.mp_preference_id) {
-                    const appDeepLink = `mercadopago://checkout?preference-id=${paymentCreated.mp_preference_id}`;
-                    console.log('📱 Tentando abrir app com deep link:', appDeepLink);
+                  const supported = await Linking.canOpenURL(paymentCreated.init_point);
+                  console.log('✅ URL suportada?', supported);
 
-                    const canOpenApp = await Linking.canOpenURL(appDeepLink);
-                    if (canOpenApp) {
-                      await Linking.openURL(appDeepLink);
-                      console.log('✅ App do Mercado Pago aberto');
-                      return;
-                    } else {
-                      console.log('⚠️ App do Mercado Pago não está instalado, abrindo navegador...');
-                    }
-                  }
-
-                  // Se não conseguiu abrir o app, abre no navegador
-                  const canOpenBrowser = await Linking.canOpenURL(paymentCreated.init_point);
-                  if (canOpenBrowser) {
+                  if (supported) {
                     await Linking.openURL(paymentCreated.init_point);
-                    console.log('✅ Navegador aberto com sucesso');
+                    console.log('✅ Link aberto com sucesso');
                   } else {
-                    console.warn('⚠️ Não é possível abrir esta URL');
-                    Alert.alert('Erro', 'Não foi possível abrir o link de pagamento');
+                    throw new Error('URL não é suportada');
                   }
                 } catch (error) {
-                  console.error('❌ Erro ao abrir Mercado Pago:', error);
-                  Alert.alert('Erro', 'Não foi possível abrir o Mercado Pago');
+                  console.error('❌ Erro ao abrir link:', error);
+                  Alert.alert(
+                    'Erro ao Abrir Link',
+                    'Não foi possível abrir o link automaticamente. Toque no link acima para copiar e colar no navegador.',
+                    [{ text: 'OK' }]
+                  );
                 }
               }}
               variant="primary"
               size="large"
             />
+
+            {paymentCreated.mp_preference_id && (
+              <RetroButton
+                title="📱 Abrir no App Mercado Pago"
+                onPress={async () => {
+                  try {
+                    const appDeepLink = `mercadopago://checkout?preference-id=${paymentCreated.mp_preference_id}`;
+                    console.log('📱 Tentando abrir app MP:', appDeepLink);
+
+                    const canOpen = await Linking.canOpenURL(appDeepLink);
+                    if (canOpen) {
+                      await Linking.openURL(appDeepLink);
+                      console.log('✅ App MP aberto');
+                    } else {
+                      Alert.alert(
+                        'App não instalado',
+                        'O app do Mercado Pago não está instalado. Use a opção de abrir no navegador.',
+                        [{ text: 'OK' }]
+                      );
+                    }
+                  } catch (error) {
+                    console.error('❌ Erro ao abrir app MP:', error);
+                    Alert.alert('Erro', 'Não foi possível abrir o app do Mercado Pago');
+                  }
+                }}
+                variant="secondary"
+                size="large"
+              />
+            )}
           </>
         )}
       </RetroCard>
@@ -1121,5 +1161,38 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 12,
     fontFamily: 'monospace',
+  },
+  linkContainer: {
+    marginBottom: 20,
+    padding: 16,
+    backgroundColor: colors.background.tertiary,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: colors.yellow.primary,
+  },
+  linkLabel: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: colors.yellow.primary,
+    marginBottom: 12,
+  },
+  linkBox: {
+    backgroundColor: colors.background.secondary,
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: colors.border.dark,
+  },
+  linkText: {
+    fontSize: 11,
+    color: colors.text.primary,
+    fontFamily: 'monospace',
+    marginBottom: 8,
+  },
+  linkHint: {
+    fontSize: 10,
+    color: colors.text.muted,
+    fontStyle: 'italic',
+    textAlign: 'center',
   },
 });
