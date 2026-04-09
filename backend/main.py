@@ -1119,6 +1119,69 @@ def add_addresses_to_existing_users(db: Session = Depends(get_db)):
             "traceback": traceback.format_exc()
         }
 
+@app.get("/test-seller-token/{username}")
+async def test_seller_token(
+    username: str,
+    db: Session = Depends(get_db)
+):
+    """
+    🔍 TESTA SE O TOKEN OAUTH DO VENDEDOR ESTÁ VÁLIDO
+    """
+    try:
+        user = db.query(User).filter(User.username == username).first()
+        if not user:
+            return {"error": "Usuário não encontrado"}
+
+        if not user.mp_access_token:
+            return {"error": "Usuário não tem MP conectado"}
+
+        # Testar o token fazendo uma requisição simples à API do MP
+        import requests
+
+        headers = {
+            "Authorization": f"Bearer {user.mp_access_token}"
+        }
+
+        # Testar com endpoint /users/me do MP
+        response = requests.get(
+            "https://api.mercadopago.com/users/me",
+            headers=headers
+        )
+
+        result = {
+            "username": username,
+            "mp_user_id_stored": user.mp_user_id,
+            "token_first_20_chars": user.mp_access_token[:20] + "...",
+            "token_test": {
+                "status_code": response.status_code,
+                "valid": response.status_code == 200,
+                "error": None if response.status_code == 200 else response.text
+            }
+        }
+
+        if response.status_code == 200:
+            mp_data = response.json()
+            result["mp_api_response"] = {
+                "id": mp_data.get("id"),
+                "nickname": mp_data.get("nickname"),
+                "email": mp_data.get("email"),
+                "site_id": mp_data.get("site_id")
+            }
+            result["token_test"]["message"] = "✅ Token válido!"
+        else:
+            result["token_test"]["message"] = "❌ Token inválido ou expirado!"
+            result["token_test"]["recommendation"] = "Vendedor precisa reconectar conta do MP"
+
+        return result
+
+    except Exception as e:
+        import traceback
+        return {
+            "status": "error",
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }
+
 @app.get("/test-mp-preference/{product_id}")
 async def test_mp_preference(
     product_id: int,
