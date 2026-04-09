@@ -155,6 +155,10 @@ export default function CheckoutScreen({ route, navigation }) {
       const result = await payment.create(product.id, paymentMethod);
 
       console.log('✅ Pagamento criado:', result);
+      console.log('📋 Resultado completo:', JSON.stringify(result, null, 2));
+      console.log('🔗 init_point:', result.init_point);
+      console.log('💳 mp_preference_id:', result.mp_preference_id);
+      console.log('💰 transaction_id:', result.transaction_id);
 
       setPaymentCreated(result);
 
@@ -242,47 +246,53 @@ export default function CheckoutScreen({ route, navigation }) {
         </Text>
 
         {paymentCreated.init_point && (
-          <RetroButton
-            title="Ir para Pagamento"
-            icon="🔗"
-            onPress={async () => {
-              try {
-                console.log('🔗 Tentando abrir Mercado Pago...');
-                console.log('📱 Preference ID:', paymentCreated.mp_preference_id);
-                console.log('🌐 Init Point:', paymentCreated.init_point);
+          <>
+            <Text style={styles.debugText}>
+              🔍 Link de pagamento:{'\n'}
+              {paymentCreated.init_point.substring(0, 50)}...
+            </Text>
+            <RetroButton
+              title="Ir para Pagamento"
+              icon="🔗"
+              onPress={async () => {
+                try {
+                  console.log('🔗 Tentando abrir Mercado Pago...');
+                  console.log('📱 Preference ID:', paymentCreated.mp_preference_id);
+                  console.log('🌐 Init Point:', paymentCreated.init_point);
 
-                // Tentar abrir o app do Mercado Pago primeiro
-                if (paymentCreated.mp_preference_id) {
-                  const appDeepLink = `mercadopago://checkout?preference-id=${paymentCreated.mp_preference_id}`;
-                  console.log('📱 Tentando abrir app com deep link:', appDeepLink);
+                  // Tentar abrir o app do Mercado Pago primeiro
+                  if (paymentCreated.mp_preference_id) {
+                    const appDeepLink = `mercadopago://checkout?preference-id=${paymentCreated.mp_preference_id}`;
+                    console.log('📱 Tentando abrir app com deep link:', appDeepLink);
 
-                  const canOpenApp = await Linking.canOpenURL(appDeepLink);
-                  if (canOpenApp) {
-                    await Linking.openURL(appDeepLink);
-                    console.log('✅ App do Mercado Pago aberto');
-                    return;
-                  } else {
-                    console.log('⚠️ App do Mercado Pago não está instalado, abrindo navegador...');
+                    const canOpenApp = await Linking.canOpenURL(appDeepLink);
+                    if (canOpenApp) {
+                      await Linking.openURL(appDeepLink);
+                      console.log('✅ App do Mercado Pago aberto');
+                      return;
+                    } else {
+                      console.log('⚠️ App do Mercado Pago não está instalado, abrindo navegador...');
+                    }
                   }
-                }
 
-                // Se não conseguiu abrir o app, abre no navegador
-                const canOpenBrowser = await Linking.canOpenURL(paymentCreated.init_point);
-                if (canOpenBrowser) {
-                  await Linking.openURL(paymentCreated.init_point);
-                  console.log('✅ Navegador aberto com sucesso');
-                } else {
-                  console.warn('⚠️ Não é possível abrir esta URL');
-                  Alert.alert('Erro', 'Não foi possível abrir o link de pagamento');
+                  // Se não conseguiu abrir o app, abre no navegador
+                  const canOpenBrowser = await Linking.canOpenURL(paymentCreated.init_point);
+                  if (canOpenBrowser) {
+                    await Linking.openURL(paymentCreated.init_point);
+                    console.log('✅ Navegador aberto com sucesso');
+                  } else {
+                    console.warn('⚠️ Não é possível abrir esta URL');
+                    Alert.alert('Erro', 'Não foi possível abrir o link de pagamento');
+                  }
+                } catch (error) {
+                  console.error('❌ Erro ao abrir Mercado Pago:', error);
+                  Alert.alert('Erro', 'Não foi possível abrir o Mercado Pago');
                 }
-              } catch (error) {
-                console.error('❌ Erro ao abrir Mercado Pago:', error);
-                Alert.alert('Erro', 'Não foi possível abrir o Mercado Pago');
-              }
-            }}
-            variant="primary"
-            size="large"
-          />
+              }}
+              variant="primary"
+              size="large"
+            />
+          </>
         )}
       </RetroCard>
     );
@@ -1104,5 +1114,12 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 14,
     color: colors.text.primary,
+  },
+  debugText: {
+    fontSize: 11,
+    color: colors.text.muted,
+    textAlign: 'center',
+    marginBottom: 12,
+    fontFamily: 'monospace',
   },
 });
