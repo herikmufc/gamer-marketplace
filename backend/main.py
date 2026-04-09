@@ -1119,6 +1119,100 @@ def add_addresses_to_existing_users(db: Session = Depends(get_db)):
             "traceback": traceback.format_exc()
         }
 
+@app.get("/marketplace-diagnostic")
+def marketplace_diagnostic(db: Session = Depends(get_db)):
+    """
+    🔍 DIAGNÓSTICO COMPLETO DO MARKETPLACE
+    Verifica todas as configurações necessárias para o marketplace funcionar
+    """
+    diagnostic = {
+        "status": "checking",
+        "issues": [],
+        "warnings": [],
+        "success": []
+    }
+
+    # 1. Verificar credenciais do Mercado Pago
+    if not MERCADOPAGO_APP_ID:
+        diagnostic["issues"].append("❌ MERCADOPAGO_APP_ID não configurado")
+    else:
+        diagnostic["success"].append(f"✅ APP_ID configurado: {MERCADOPAGO_APP_ID[:10]}...")
+
+    if not MERCADOPAGO_CLIENT_SECRET:
+        diagnostic["issues"].append("❌ MERCADOPAGO_CLIENT_SECRET não configurado")
+    else:
+        diagnostic["success"].append(f"✅ CLIENT_SECRET configurado: {MERCADOPAGO_CLIENT_SECRET[:10]}...")
+
+    if not MERCADOPAGO_ACCESS_TOKEN:
+        diagnostic["issues"].append("❌ MERCADOPAGO_ACCESS_TOKEN não configurado (token da plataforma)")
+    else:
+        diagnostic["success"].append(f"✅ ACCESS_TOKEN configurado: {MERCADOPAGO_ACCESS_TOKEN[:20]}...")
+
+    if not MERCADOPAGO_REDIRECT_URI:
+        diagnostic["issues"].append("❌ MERCADOPAGO_REDIRECT_URI não configurado")
+    else:
+        diagnostic["success"].append(f"✅ REDIRECT_URI: {MERCADOPAGO_REDIRECT_URI}")
+
+    # 2. Verificar usuários com MP conectado
+    users_with_mp = db.query(User).filter(User.mp_access_token != None).all()
+    if not users_with_mp:
+        diagnostic["warnings"].append("⚠️ Nenhum usuário tem Mercado Pago conectado")
+    else:
+        diagnostic["success"].append(f"✅ {len(users_with_mp)} usuário(s) com MP conectado:")
+        for user in users_with_mp:
+            diagnostic["success"].append(f"   - {user.username} (MP User ID: {user.mp_user_id})")
+
+    # 3. Verificar produtos disponíveis
+    products = db.query(Product).filter(Product.is_sold == False).all()
+    if not products:
+        diagnostic["warnings"].append("⚠️ Nenhum produto disponível para venda")
+    else:
+        diagnostic["success"].append(f"✅ {len(products)} produto(s) disponível(is) para venda")
+
+    # 4. Verificar produtos com vendedor sem MP
+    products_without_mp = db.query(Product).join(User, Product.owner_id == User.id).filter(
+        Product.is_sold == False,
+        User.mp_access_token == None
+    ).all()
+    if products_without_mp:
+        diagnostic["warnings"].append(f"⚠️ {len(products_without_mp)} produto(s) de vendedores sem MP conectado (não podem ser vendidos)")
+
+    # 5. Verificar endereços dos usuários
+    users_without_address = db.query(User).filter(
+        (User.address_zipcode == None) | (User.address_zipcode == "")
+    ).count()
+    if users_without_address > 0:
+        diagnostic["warnings"].append(f"⚠️ {users_without_address} usuário(s) sem endereço cadastrado (frete não calculará)")
+    else:
+        diagnostic["success"].append("✅ Todos os usuários têm endereço cadastrado")
+
+    # 6. URLs críticas
+    diagnostic["urls"] = {
+        "webhook": "https://gamer-marketplace.onrender.com/webhook/mercadopago",
+        "oauth_callback": MERCADOPAGO_REDIRECT_URI,
+        "success_url": "https://gamer-marketplace.onrender.com/payment/success",
+        "failure_url": "https://gamer-marketplace.onrender.com/payment/failure",
+    }
+
+    # 7. Comissão da plataforma
+    diagnostic["platform_config"] = {
+        "commission_percent": PLATFORM_COMMISSION_PERCENT,
+        "commission_description": f"Plataforma recebe {PLATFORM_COMMISSION_PERCENT}% de cada venda"
+    }
+
+    # Status final
+    if diagnostic["issues"]:
+        diagnostic["status"] = "critical"
+        diagnostic["message"] = "❌ Marketplace NÃO está funcional - problemas críticos encontrados"
+    elif diagnostic["warnings"]:
+        diagnostic["status"] = "warning"
+        diagnostic["message"] = "⚠️ Marketplace está funcional mas com avisos"
+    else:
+        diagnostic["status"] = "healthy"
+        diagnostic["message"] = "✅ Marketplace está 100% funcional!"
+
+    return diagnostic
+
 @app.get("/health")
 def health_check():
     """Health check endpoint"""
