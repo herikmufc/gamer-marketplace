@@ -1119,6 +1119,118 @@ def add_addresses_to_existing_users(db: Session = Depends(get_db)):
             "traceback": traceback.format_exc()
         }
 
+@app.get("/test-mp-preference/{product_id}")
+async def test_mp_preference(
+    product_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    🔍 TESTE DE CRIAÇÃO DE PREFERÊNCIA MP
+    Testa se o marketplace está configurado corretamente
+    """
+    try:
+        # Buscar produto
+        product = db.query(Product).filter(Product.id == product_id).first()
+        if not product:
+            return {"error": "Produto não encontrado"}
+
+        # Buscar vendedor
+        seller = db.query(User).filter(User.id == product.owner_id).first()
+        if not seller:
+            return {"error": "Vendedor não encontrado"}
+
+        if not seller.mp_access_token:
+            return {"error": f"Vendedor {seller.username} não tem MP conectado"}
+
+        # Calcular valores
+        amount = float(product.final_price)
+        platform_fee = amount * (PLATFORM_COMMISSION_PERCENT / 100)
+        seller_amount = amount - platform_fee
+
+        # Inicializar SDK
+        seller_mp_sdk = mercadopago.SDK(seller.mp_access_token)
+
+        # Criar preferência de teste
+        preference_data = {
+            "items": [
+                {
+                    "title": product.title,
+                    "description": product.description[:256] if product.description else "",
+                    "quantity": 1,
+                    "unit_price": amount,
+                    "currency_id": "BRL"
+                }
+            ],
+            "payer": {
+                "name": "Comprador Teste",
+                "email": "teste@teste.com"
+            },
+            "back_urls": {
+                "success": "https://gamer-marketplace.onrender.com/payment/success",
+                "failure": "https://gamer-marketplace.onrender.com/payment/failure",
+                "pending": "https://gamer-marketplace.onrender.com/payment/pending"
+            },
+            "auto_return": "approved",
+            "external_reference": f"test_product_{product.id}",
+            "statement_descriptor": "RETROTRADE BRASIL",
+            "notification_url": "https://gamer-marketplace.onrender.com/webhook/mercadopago",
+            "marketplace_fee": float(platform_fee)
+        }
+
+        print(f"🔍 [TEST] Criando preferência de teste...")
+        response = seller_mp_sdk.preference().create(preference_data)
+
+        # Extrair preferência
+        preference = None
+        if isinstance(response, dict):
+            if "response" in response:
+                preference = response["response"]
+            else:
+                preference = response
+
+        result = {
+            "status": "success",
+            "seller": {
+                "username": seller.username,
+                "mp_user_id": seller.mp_user_id,
+                "has_token": bool(seller.mp_access_token)
+            },
+            "product": {
+                "id": product.id,
+                "title": product.title,
+                "price": amount
+            },
+            "fees": {
+                "total": amount,
+                "platform_fee": platform_fee,
+                "seller_receives": seller_amount
+            },
+            "preference_data_sent": {
+                "marketplace_fee": preference_data["marketplace_fee"],
+                "items": preference_data["items"]
+            },
+            "mp_response": {
+                "has_id": "id" in preference if preference else False,
+                "has_init_point": "init_point" in preference if preference else False,
+                "preference_id": preference.get("id") if preference else None,
+                "init_point": preference.get("init_point") if preference else None,
+                "client_id": preference.get("client_id") if preference else None,
+                "marketplace_in_response": "marketplace" in preference if preference else False,
+            },
+            "raw_response_keys": list(preference.keys()) if preference else [],
+            "full_preference": preference
+        }
+
+        return result
+
+    except Exception as e:
+        import traceback
+        return {
+            "status": "error",
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }
+
 @app.get("/marketplace-diagnostic")
 def marketplace_diagnostic(db: Session = Depends(get_db)):
     """
