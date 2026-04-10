@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
-import { ActivityIndicator, View, Text, StyleSheet } from 'react-native';
+import { ActivityIndicator, View, Text, StyleSheet, Linking, Alert } from 'react-native';
 import AnimatedSplashScreen from './src/screens/AnimatedSplashScreen';
 
 // Screens
@@ -149,6 +149,44 @@ function AppStack() {
 // Root Navigator
 function RootNavigator() {
   const { user, loading } = useAuth();
+
+  useEffect(() => {
+    // Handle deep linking when app is opened via OAuth callback
+    const handleDeepLink = (event) => {
+      const url = event.url;
+      console.log('🔗 Deep link recebido:', url);
+
+      if (url.includes('oauth/callback')) {
+        if (url.includes('success=true')) {
+          Alert.alert(
+            '✅ Sucesso!',
+            'Sua conta do Mercado Pago foi conectada com sucesso!',
+            [{ text: 'OK' }]
+          );
+        } else {
+          Alert.alert(
+            '❌ Erro',
+            'Não foi possível conectar sua conta do Mercado Pago.',
+            [{ text: 'OK' }]
+          );
+        }
+      }
+    };
+
+    // Listen for deep links when app is already open
+    const subscription = Linking.addEventListener('url', handleDeepLink);
+
+    // Handle deep link when app opens from closed state
+    Linking.getInitialURL().then((url) => {
+      if (url) {
+        handleDeepLink({ url });
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
 
   if (loading) {
     return (

@@ -804,7 +804,7 @@ async def mercadopago_callback(
 
         # Redirecionar para o app mobile com sucesso
         return RedirectResponse(
-            url=f"exp://192.168.0.1:8081/--/mp-success?user_id={user.id}",
+            url=f"retrotrade://oauth/callback?success=true&user_id={user.id}",
             status_code=302
         )
 

@@ -7,6 +7,7 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "newArchEnabled": false,
+    "scheme": "retrotrade",
     "splash": {
       "image": "./assets/logo.png",
       "resizeMode": "contain",
