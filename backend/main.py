@@ -840,6 +840,51 @@ async def mercadopago_disconnect(
 
     return {"message": "Conta do Mercado Pago desconectada com sucesso"}
 
+@app.post("/auth/mercadopago/manual-connect")
+async def mercadopago_manual_connect(
+    access_token: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Conecta manualmente usando um access_token (para testes)
+    Útil quando OAuth não está habilitado no painel do MP
+    """
+    try:
+        # Validar token fazendo request ao MP
+        headers = {"Authorization": f"Bearer {access_token}"}
+        response = requests.get("https://api.mercadopago.com/users/me", headers=headers)
+
+        if response.status_code != 200:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Token inválido: {response.text}"
+            )
+
+        user_info = response.json()
+
+        # Salvar no banco
+        current_user.mp_access_token = access_token
+        current_user.mp_user_id = str(user_info.get("id"))
+        current_user.mp_connected_at = datetime.utcnow()
+
+        db.commit()
+        db.refresh(current_user)
+
+        return {
+            "message": "Conectado com sucesso!",
+            "mp_user_id": current_user.mp_user_id,
+            "email": user_info.get("email")
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erro ao conectar: {str(e)}"
+        )
+
 # ============================================
 # ENDPOINTS - HEALTH CHECK
 # ============================================
