@@ -149,7 +149,7 @@ export default function HomeScreen({ navigation }) {
         <Image
           source={require('../../assets/brand/banner.png')}
           style={styles.bannerImage}
-          resizeMode="contain"
+          resizeMode="cover"
         />
         <View style={styles.taglineContainer}>
           <Ionicons name="game-controller" size={16} color={colors.text.secondary} />
@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
   },
   bannerImage: {
     width: '100%',
-    height: 160,
+    height: 200,
     marginBottom: 12,
   },
   taglineContainer: {
