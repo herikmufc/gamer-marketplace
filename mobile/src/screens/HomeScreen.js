@@ -27,7 +27,6 @@ export default function HomeScreen({ navigation }) {
     { id: 'all', label: 'Todos', icon: '🎮' },
     { id: 'console', label: 'Consoles', icon: '🕹️' },
     { id: 'game', label: 'Jogos', icon: '👾' },
-    { id: 'peripheral', label: 'Periféricos', icon: '🎧' },
   ];
 
   useEffect(() => {
@@ -230,7 +229,7 @@ export default function HomeScreen({ navigation }) {
       {/* Products List */}
       {loading && !refreshing ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#7c3aed" />
+          <ActivityIndicator size="large" color={colors.yellow.primary} />
         </View>
       ) : (
         <FlatList
@@ -242,7 +241,7 @@ export default function HomeScreen({ navigation }) {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor="#7c3aed"
+              tintColor={colors.yellow.primary}
             />
           }
           ListEmptyComponent={

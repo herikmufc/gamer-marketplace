@@ -1,77 +1,79 @@
 /**
  * 🎮 RetroTrade Brasil - Design System
- * Inspirado em jogos retro clássicos
+ * Tema Bege/Laranja - Estilo Retro
  */
 
 export const colors = {
-  // Background
+  // Background - Tons Bege/Creme
   background: {
-    primary: '#0a0a0a',      // Preto profundo
-    secondary: '#1a1a1a',    // Preto suave
-    tertiary: '#2a2a2a',     // Cinza escuro
+    primary: '#f5f1e8',      // Bege claro (fundo principal)
+    secondary: '#ffffff',    // Branco (cards)
+    tertiary: '#ffe8cc',     // Bege mais claro
   },
 
-  // Amarelo Retro (Pac-Man vibes)
+  // Laranja Principal
   yellow: {
-    primary: '#FFD700',      // Amarelo ouro
-    secondary: '#FFC107',    // Amarelo mostarda
-    dark: '#FFA000',         // Amarelo escuro
-    light: '#FFECB3',        // Amarelo claro
+    primary: '#ff6b35',      // Laranja vibrante
+    secondary: '#ff8c42',    // Laranja médio
+    dark: '#e55a2b',         // Laranja escuro
+    light: '#ffb088',        // Laranja claro
   },
 
-  // Personagens Clássicos
+  // Personagens Clássicos (para compatibilidade)
   mario: {
-    red: '#FF1744',          // Vermelho Mario
-    blue: '#2196F3',         // Azul Mario
+    red: '#FF1744',
+    blue: '#2196F3',
   },
 
   sonic: {
-    blue: '#4A9EFF',         // Azul Sonic
-    yellow: '#FFD700',       // Anéis dourados
+    blue: '#4A9EFF',
+    yellow: '#ff6b35',
   },
 
   pacman: {
-    yellow: '#FFFF00',       // Pac-Man
+    yellow: '#ff6b35',
     ghost: {
-      red: '#FF0000',        // Blinky
-      pink: '#FFB8FF',       // Pinky
-      cyan: '#00FFFF',       // Inky
-      orange: '#FFB852',     // Clyde
+      red: '#FF1744',
+      pink: '#FFB8FF',
+      cyan: '#00FFFF',
+      orange: '#ff6b35',
     }
   },
 
   // Status
-  success: '#4CAF50',        // Verde Luigi
+  success: '#4CAF50',        // Verde
   warning: '#FF9100',        // Laranja
   error: '#FF1744',          // Vermelho
-  info: '#4A9EFF',           // Azul
+  info: '#2196F3',           // Azul
 
   // Text
   text: {
-    primary: '#FFFFFF',
-    secondary: '#CCCCCC',
-    muted: '#999999',
-    yellow: '#FFD700',
+    primary: '#2d2d2d',      // Preto suave
+    secondary: '#666666',    // Cinza médio
+    muted: '#999999',        // Cinza claro
+    yellow: '#ff6b35',       // Laranja
   },
 
   // Border
   border: {
-    dark: '#333333',
-    light: '#444444',
-    yellow: '#FFD700',
+    dark: '#e0d5c7',         // Bege escuro
+    light: '#f0e6d8',        // Bege claro
+    yellow: '#ff6b35',       // Laranja
   },
 
   // Transparências
-  overlay: 'rgba(0, 0, 0, 0.8)',
-  overlayLight: 'rgba(0, 0, 0, 0.5)',
+  overlay: 'rgba(0, 0, 0, 0.5)',
+  overlayLight: 'rgba(0, 0, 0, 0.3)',
 };
 
 export const gradients = {
-  yellow: ['#FFD700', '#FFA000'],
-  retro: ['#FF1744', '#FFD700'],
-  pacman: ['#FFFF00', '#FFA000'],
+  orange: ['#ff6b35', '#e55a2b'],
+  beige: ['#f5f1e8', '#ffe8cc'],
+  yellow: ['#ff6b35', '#e55a2b'],
+  retro: ['#FF1744', '#ff6b35'],
+  pacman: ['#ff6b35', '#e55a2b'],
   sonic: ['#4A9EFF', '#1976D2'],
-  dark: ['#1a1a1a', '#0a0a0a'],
+  dark: ['#2d2d2d', '#1a1a1a'],
 };
 
 export default colors;
