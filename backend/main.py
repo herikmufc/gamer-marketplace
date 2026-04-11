@@ -348,6 +348,34 @@ class Transaction(Base):
     # Relationships
     product = relationship("Product")
 
+class Cheat(Base):
+    __tablename__ = "cheats"
+    id = Column(Integer, primary_key=True, index=True)
+
+    # Informações do jogo
+    game_title = Column(String(255), nullable=False, index=True)
+    console = Column(String(100), nullable=False, index=True)  # ex: "NES", "SNES", "PS1", "PS2", etc
+    genre = Column(String(100), nullable=True, index=True)  # ex: "Action", "RPG", "Fighting"
+
+    # Informações do cheat
+    cheat_title = Column(String(255), nullable=False)  # ex: "Vidas Infinitas", "Pular Fase"
+    cheat_code = Column(Text, nullable=False)  # O código em si
+    cheat_type = Column(String(50), nullable=True)  # ex: "code", "button_combo", "password", "glitch"
+    description = Column(Text, nullable=True)  # Descrição do que o cheat faz
+
+    # Metadados
+    difficulty = Column(String(20), nullable=True)  # "easy", "medium", "hard"
+    verified = Column(Boolean, default=False)  # Se o cheat foi verificado/testado
+    upvotes = Column(Integer, default=0)  # Sistema de votação
+    downvotes = Column(Integer, default=0)
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Quem adicionou (opcional)
+    submitted_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+
 # Create tables
 Base.metadata.create_all(bind=engine)
 
@@ -1715,6 +1743,110 @@ def search_products(q: str, db: Session = Depends(get_db)):
     except Exception as e:
         print(f"❌ Error searching products: {e}")
         raise HTTPException(status_code=500, detail=f"Erro ao buscar produtos: {str(e)}")
+
+# ============================================
+# ENDPOINTS - CHEATS (CÓDIGOS SECRETOS)
+# ============================================
+
+@app.get("/cheats/consoles")
+async def get_consoles(db: Session = Depends(get_db)):
+    """Lista todos os consoles disponíveis com contagem de cheats"""
+    consoles = db.query(
+        Cheat.console,
+        db.func.count(Cheat.id).label('cheat_count')
+    ).group_by(Cheat.console).order_by(Cheat.console).all()
+
+    return [{"console": c[0], "cheat_count": c[1]} for c in consoles]
+
+@app.get("/cheats/games")
+async def get_games(
+    console: Optional[str] = None,
+    genre: Optional[str] = None,
+    search: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    """Lista jogos filtrados por console, gênero ou busca"""
+    query = db.query(
+        Cheat.game_title,
+        Cheat.console,
+        Cheat.genre,
+        db.func.count(Cheat.id).label('cheat_count')
+    )
+
+    if console:
+        query = query.filter(Cheat.console == console)
+    if genre:
+        query = query.filter(Cheat.genre == genre)
+    if search:
+        query = query.filter(Cheat.game_title.contains(search))
+
+    games = query.group_by(Cheat.game_title, Cheat.console, Cheat.genre).all()
+
+    return [{
+        "game_title": g[0],
+        "console": g[1],
+        "genre": g[2],
+        "cheat_count": g[3]
+    } for g in games]
+
+@app.get("/cheats/game/{game_title}")
+async def get_game_cheats(
+    game_title: str,
+    console: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    """Lista todos os cheats de um jogo específico"""
+    query = db.query(Cheat).filter(Cheat.game_title == game_title)
+
+    if console:
+        query = query.filter(Cheat.console == console)
+
+    cheats = query.order_by(desc(Cheat.upvotes)).all()
+    return cheats
+
+@app.get("/cheats/search")
+async def search_cheats(
+    q: str,
+    console: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    """Busca cheats por título do jogo ou descrição do cheat"""
+    query = db.query(Cheat).filter(
+        or_(
+            Cheat.game_title.contains(q),
+            Cheat.cheat_title.contains(q),
+            Cheat.description.contains(q)
+        )
+    )
+
+    if console:
+        query = query.filter(Cheat.console == console)
+
+    cheats = query.order_by(desc(Cheat.upvotes)).limit(50).all()
+    return cheats
+
+@app.post("/cheats/{cheat_id}/vote")
+async def vote_cheat(
+    cheat_id: int,
+    vote_type: str,  # "up" or "down"
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Vota em um cheat (upvote ou downvote)"""
+    cheat = db.query(Cheat).filter(Cheat.id == cheat_id).first()
+    if not cheat:
+        raise HTTPException(status_code=404, detail="Cheat não encontrado")
+
+    if vote_type == "up":
+        cheat.upvotes += 1
+    elif vote_type == "down":
+        cheat.downvotes += 1
+    else:
+        raise HTTPException(status_code=400, detail="vote_type deve ser 'up' ou 'down'")
+
+    db.commit()
+    db.refresh(cheat)
+    return cheat
 
 # ============================================
 # ENDPOINTS - CHAT
