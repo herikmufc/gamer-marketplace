@@ -55,11 +55,11 @@ function TabIcon({ label, iconImage, focused }) {
         source={iconImage}
         style={[
           styles.tabIconImage,
-          { tintColor: focused ? colors.yellow.primary : colors.text.muted }
+          { opacity: focused ? 1 : 0.5 }
         ]}
         resizeMode="contain"
       />
-      <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>
+      <Text style={[styles.tabLabel, focused && styles.tabLabelActive]} numberOfLines={1}>
         {label}
       </Text>
     </View>
@@ -280,16 +280,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   tabIconImage: {
-    width: 24,
-    height: 24,
-    marginBottom: 2,
+    width: 28,
+    height: 28,
   },
   tabLabel: {
-    fontSize: 9,
+    fontSize: 8,
     color: colors.text.muted,
     fontWeight: '600',
     textTransform: 'uppercase',
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
+    marginTop: 2,
   },
   tabLabelActive: {
     color: colors.yellow.primary,
