@@ -4,7 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
-import { ActivityIndicator, View, Text, StyleSheet, Linking, Alert } from 'react-native';
+import { ActivityIndicator, View, Text, StyleSheet, Linking, Alert, Image } from 'react-native';
 import AnimatedSplashScreen from './src/screens/AnimatedSplashScreen';
 
 // Screens
