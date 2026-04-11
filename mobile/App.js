@@ -111,6 +111,15 @@ function MainTabs() {
         }}
       />
       <Tab.Screen
+        name="MaintenanceTab"
+        component={MaintenanceScreen}
+        options={{
+          tabBarIcon: ({ focused }) => (
+            <TabIcon label="Ajuda" iconName="construct" focused={focused} />
+          ),
+        }}
+      />
+      <Tab.Screen
         name="ChatTab"
         component={ChatListScreen}
         options={{
