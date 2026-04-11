@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
   },
   bannerImage: {
     width: '100%',
-    height: 180,
+    height: 240,
     marginBottom: 12,
   },
   taglineContainer: {
