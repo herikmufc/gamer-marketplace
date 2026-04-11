@@ -11,6 +11,7 @@ import {
   Linking,
   TextInput,
   Modal,
+  Platform,
 } from 'react-native';
 import { payment, shipping } from '../api/client';
 import { colors } from '../theme/colors';
@@ -276,26 +277,36 @@ export default function CheckoutScreen({ route, navigation }) {
             </View>
 
             <RetroButton
-              title="🌐 Abrir Pagamento no Navegador"
+              title="💳 Ir para Pagamento"
+              icon="🚀"
               onPress={async () => {
                 try {
-                  console.log('🔗 Abrindo link direto no navegador...');
-                  console.log('🌐 URL:', paymentCreated.init_point);
+                  console.log('🔗 Abrindo checkout do Mercado Pago...');
+                  const url = paymentCreated.init_point;
+                  console.log('🌐 URL:', url);
 
-                  const supported = await Linking.canOpenURL(paymentCreated.init_point);
-                  console.log('✅ URL suportada?', supported);
-
-                  if (supported) {
-                    await Linking.openURL(paymentCreated.init_point);
-                    console.log('✅ Link aberto com sucesso');
+                  // Forçar abertura no navegador web (não no app MP)
+                  // Isso garante que links de TESTE funcionem mesmo com app MP de produção instalado
+                  if (Platform.OS === 'android') {
+                    // Android: usar intent para forçar navegador
+                    const browserUrl = `intent://${url.replace(/^https?:\/\//, '')}#Intent;scheme=https;package=com.android.chrome;end`;
+                    try {
+                      await Linking.openURL(browserUrl);
+                    } catch {
+                      // Fallback: abrir normalmente
+                      await Linking.openURL(url);
+                    }
                   } else {
-                    throw new Error('URL não é suportada');
+                    // iOS/outros: abrir normalmente (vai pro navegador padrão)
+                    await Linking.openURL(url);
                   }
+
+                  console.log('✅ Checkout aberto');
                 } catch (error) {
-                  console.error('❌ Erro ao abrir link:', error);
+                  console.error('❌ Erro ao abrir checkout:', error);
                   Alert.alert(
-                    'Erro ao Abrir Link',
-                    'Não foi possível abrir o link automaticamente. Toque no link acima para copiar e colar no navegador.',
+                    'Erro',
+                    'Não foi possível abrir o pagamento. Tente novamente.',
                     [{ text: 'OK' }]
                   );
                 }
@@ -303,35 +314,6 @@ export default function CheckoutScreen({ route, navigation }) {
               variant="primary"
               size="large"
             />
-
-            {paymentCreated.mp_preference_id && (
-              <RetroButton
-                title="📱 Abrir no App Mercado Pago"
-                onPress={async () => {
-                  try {
-                    const appDeepLink = `mercadopago://checkout?preference-id=${paymentCreated.mp_preference_id}`;
-                    console.log('📱 Tentando abrir app MP:', appDeepLink);
-
-                    const canOpen = await Linking.canOpenURL(appDeepLink);
-                    if (canOpen) {
-                      await Linking.openURL(appDeepLink);
-                      console.log('✅ App MP aberto');
-                    } else {
-                      Alert.alert(
-                        'App não instalado',
-                        'O app do Mercado Pago não está instalado. Use a opção de abrir no navegador.',
-                        [{ text: 'OK' }]
-                      );
-                    }
-                  } catch (error) {
-                    console.error('❌ Erro ao abrir app MP:', error);
-                    Alert.alert('Erro', 'Não foi possível abrir o app do Mercado Pago');
-                  }
-                }}
-                variant="secondary"
-                size="large"
-              />
-            )}
           </>
         )}
       </RetroCard>
