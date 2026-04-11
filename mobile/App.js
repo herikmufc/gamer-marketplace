@@ -28,6 +28,7 @@ import VideoVerificationScreen from './src/screens/VideoVerificationScreen';
 import MyTransactionsScreen from './src/screens/MyTransactionsScreen';
 import TransactionDetailScreen from './src/screens/TransactionDetailScreen';
 import MaintenanceScreen from './src/screens/MaintenanceScreen';
+import CheatsScreen from './src/screens/CheatsScreen';
 
 // Theme
 import { colors } from './src/theme/colors';
@@ -96,11 +97,11 @@ function MainTabs() {
         }}
       />
       <Tab.Screen
-        name="MaintenanceTab"
-        component={MaintenanceScreen}
+        name="CheatsTab"
+        component={CheatsScreen}
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon label="Manutenção" icon="🛠️" focused={focused} />
+            <TabIcon label="Cheats" icon="🎯" focused={focused} />
           ),
         }}
       />
