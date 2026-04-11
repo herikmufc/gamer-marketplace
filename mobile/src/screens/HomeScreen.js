@@ -10,11 +10,11 @@ import {
   RefreshControl,
   Image,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { products } from '../api/client';
 import { colors } from '../theme/colors';
 import RetroCard from '../components/RetroCard';
-import RetroButton from '../components/RetroButton';
 
 export default function HomeScreen({ navigation }) {
   const [productList, setProductList] = useState([]);
@@ -144,20 +144,28 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      {/* Header with Brand */}
+      {/* Header with Brand Banner */}
       <View style={styles.header}>
-        <View style={styles.brandContainer}>
-          <View style={styles.brandLogoCircle}>
-            <Text style={styles.brandLogo}>🐱</Text>
+        <View style={styles.bannerContainer}>
+          <View style={styles.mascotCircle}>
+            <Text style={styles.mascot}>🐱</Text>
           </View>
-          <View style={styles.brandTextContainer}>
-            <Text style={styles.brandTitle}>RETROTRADE</Text>
-            <Text style={styles.brandSubtitle}>BRASIL</Text>
+          <View style={styles.brandBlock}>
+            <View style={styles.brandRow}>
+              <Text style={styles.brandTextRetro}>RETRO</Text>
+            </View>
+            <View style={styles.brandRow}>
+              <Text style={styles.brandTextTrade}>TRADE</Text>
+            </View>
+            <View style={styles.brandRow}>
+              <Text style={styles.brandTextBrasil}>BRASIL</Text>
+            </View>
           </View>
         </View>
-        <Text style={styles.brandTagline}>
-          🎮 Games Clássicos, Preços Modernos
-        </Text>
+        <View style={styles.taglineContainer}>
+          <Ionicons name="game-controller" size={16} color={colors.text.secondary} />
+          <Text style={styles.brandTagline}>Games Clássicos, Preços Modernos</Text>
+        </View>
       </View>
 
       {/* Search */}
@@ -274,52 +282,87 @@ const styles = StyleSheet.create({
   header: {
     padding: 20,
     paddingTop: 60,
+    paddingBottom: 16,
     backgroundColor: colors.background.secondary,
     borderBottomWidth: 3,
     borderBottomColor: colors.yellow.primary,
   },
-  brandContainer: {
+  bannerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
   },
-  brandLogoCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+  mascotCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     backgroundColor: colors.yellow.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
-    borderWidth: 3,
+    marginRight: 16,
+    borderWidth: 4,
     borderColor: colors.yellow.dark,
+    shadowColor: colors.yellow.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
-  brandLogo: {
-    fontSize: 32,
+  mascot: {
+    fontSize: 42,
   },
-  brandTextContainer: {
+  brandBlock: {
     flex: 1,
   },
-  brandTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
+  brandRow: {
+    marginBottom: -4,
+  },
+  brandTextRetro: {
+    fontSize: 32,
+    fontWeight: '900',
     color: colors.yellow.primary,
-    letterSpacing: 2,
+    letterSpacing: -0.5,
+    textTransform: 'uppercase',
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
     textShadowOffset: { width: 2, height: 2 },
     textShadowRadius: 0,
+    lineHeight: 34,
   },
-  brandSubtitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: colors.text.primary,
-    letterSpacing: 1.5,
+  brandTextTrade: {
+    fontSize: 32,
+    fontWeight: '900',
+    color: colors.yellow.primary,
+    letterSpacing: -0.5,
+    textTransform: 'uppercase',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 0,
+    lineHeight: 34,
+  },
+  brandTextBrasil: {
+    fontSize: 32,
+    fontWeight: '900',
+    color: '#4a9d8f',
+    letterSpacing: -0.5,
+    textTransform: 'uppercase',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 0,
+    lineHeight: 34,
+  },
+  taglineContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: colors.border.dark,
   },
   brandTagline: {
     fontSize: 13,
     color: colors.text.secondary,
-    textAlign: 'center',
-    marginTop: 4,
+    fontWeight: '600',
   },
   searchContainer: {
     flexDirection: 'row',
