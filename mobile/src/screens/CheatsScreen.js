@@ -9,9 +9,9 @@ import {
   ActivityIndicator,
   ScrollView,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import RetroCard from '../components/RetroCard';
-import RetroButton from '../components/RetroButton';
 
 const API_URL = 'https://gamer-marketplace.onrender.com';
 
@@ -104,12 +104,18 @@ export default function CheatsScreen() {
     >
       <RetroCard style={styles.card}>
         <View style={styles.cardContent}>
-          <Text style={styles.consoleIcon}>{getConsoleIcon(item.console)}</Text>
+          <View style={styles.iconCircle}>
+            <Ionicons
+              name={getConsoleIcon(item.console)}
+              size={28}
+              color={colors.yellow.primary}
+            />
+          </View>
           <View style={styles.cardInfo}>
             <Text style={styles.cardTitle}>{item.console}</Text>
             <Text style={styles.cardSubtitle}>{item.cheat_count} cheats</Text>
           </View>
-          <Text style={styles.arrow}>→</Text>
+          <Ionicons name="chevron-forward" size={24} color={colors.yellow.primary} />
         </View>
       </RetroCard>
     </TouchableOpacity>
@@ -125,14 +131,20 @@ export default function CheatsScreen() {
     >
       <RetroCard style={styles.card}>
         <View style={styles.cardContent}>
-          <Text style={styles.gameIcon}>🎮</Text>
+          <View style={styles.iconCircle}>
+            <Ionicons
+              name="game-controller"
+              size={24}
+              color={colors.yellow.primary}
+            />
+          </View>
           <View style={styles.cardInfo}>
             <Text style={styles.cardTitle}>{item.game_title}</Text>
             <Text style={styles.cardSubtitle}>
               {item.console} • {item.cheat_count} cheats
             </Text>
           </View>
-          <Text style={styles.arrow}>→</Text>
+          <Ionicons name="chevron-forward" size={24} color={colors.yellow.primary} />
         </View>
       </RetroCard>
     </TouchableOpacity>
@@ -177,25 +189,35 @@ export default function CheatsScreen() {
   );
 
   const getConsoleIcon = (console) => {
+    // Retorna nome do ícone Ionicons baseado no console
     const icons = {
-      'NES': '🕹️',
-      'SNES': '🎮',
-      'N64': '🎯',
-      'Genesis': '🦔',
-      'PS1': '🔲',
-      'PS2': '🟦',
-      'Game Boy': '📱',
-      'GBA': '🎮',
+      'NES': 'game-controller-outline',
+      'SNES': 'game-controller',
+      'N64': 'cube-outline',
+      'Genesis': 'flash',
+      'PS1': 'square-outline',
+      'PS2': 'square',
+      'Game Boy': 'phone-portrait-outline',
+      'GBA': 'phone-portrait',
+      'GameCube': 'cube',
+      'Xbox': 'logo-xbox',
+      'Dreamcast': 'disc-outline',
+      'Atari 2600': 'hardware-chip-outline',
     };
-    return icons[console] || '🎮';
+    return icons[console] || 'game-controller';
   };
 
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>🎮 CHEATS</Text>
-        <Text style={styles.headerSubtitle}>Códigos Secretos e Macetes</Text>
+        <View style={styles.headerContent}>
+          <Ionicons name="key" size={32} color={colors.yellow.primary} />
+          <View style={styles.headerText}>
+            <Text style={styles.headerTitle}>CHEATS</Text>
+            <Text style={styles.headerSubtitle}>Códigos Secretos • Biblioteca Ilimitada</Text>
+          </View>
+        </View>
       </View>
 
       {/* Search */}
@@ -299,7 +321,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background.secondary,
     borderBottomWidth: 3,
     borderBottomColor: colors.yellow.primary,
+  },
+  headerContent: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 12,
+  },
+  headerText: {
+    flex: 1,
   },
   headerTitle: {
     fontSize: 28,
@@ -308,9 +337,9 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
   },
   headerSubtitle: {
-    fontSize: 14,
+    fontSize: 12,
     color: colors.text.secondary,
-    marginTop: 4,
+    marginTop: 2,
   },
   searchContainer: {
     flexDirection: 'row',
@@ -387,12 +416,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
   },
-  consoleIcon: {
-    fontSize: 40,
-    marginRight: 16,
-  },
-  gameIcon: {
-    fontSize: 32,
+  iconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: colors.background.primary,
+    borderWidth: 2,
+    borderColor: colors.yellow.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginRight: 12,
   },
   cardInfo: {
@@ -407,11 +439,6 @@ const styles = StyleSheet.create({
   cardSubtitle: {
     fontSize: 14,
     color: colors.text.secondary,
-  },
-  arrow: {
-    fontSize: 24,
-    color: colors.yellow.primary,
-    fontWeight: 'bold',
   },
   cheatCard: {
     marginBottom: 16,

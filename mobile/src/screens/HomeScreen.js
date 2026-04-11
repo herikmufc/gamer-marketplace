@@ -144,18 +144,19 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      {/* Header Retro */}
+      {/* Header with Brand */}
       <View style={styles.header}>
-        <View style={styles.headerTop}>
-          <Text style={styles.headerIcon}>🕹️</Text>
-          <View style={styles.headerTextContainer}>
-            <Text style={styles.headerTitle}>RETROTRADE</Text>
-            <Text style={styles.headerSubtitle}>BRASIL</Text>
+        <View style={styles.brandContainer}>
+          <View style={styles.brandLogoCircle}>
+            <Text style={styles.brandLogo}>🐱</Text>
           </View>
-          <Text style={styles.headerChar}>👾</Text>
+          <View style={styles.brandTextContainer}>
+            <Text style={styles.brandTitle}>RETROTRADE</Text>
+            <Text style={styles.brandSubtitle}>BRASIL</Text>
+          </View>
         </View>
-        <Text style={styles.headerTagline}>
-          💎 Games Clássicos, Preços Modernos
+        <Text style={styles.brandTagline}>
+          🎮 Games Clássicos, Preços Modernos
         </Text>
       </View>
 
@@ -277,39 +278,48 @@ const styles = StyleSheet.create({
     borderBottomWidth: 3,
     borderBottomColor: colors.yellow.primary,
   },
-  headerTop: {
+  brandContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: 12,
   },
-  headerIcon: {
-    fontSize: 40,
-  },
-  headerTextContainer: {
-    flex: 1,
+  brandLogoCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.yellow.primary,
+    justifyContent: 'center',
     alignItems: 'center',
+    marginRight: 12,
+    borderWidth: 3,
+    borderColor: colors.yellow.dark,
   },
-  headerChar: {
+  brandLogo: {
     fontSize: 32,
   },
-  headerTitle: {
+  brandTextContainer: {
+    flex: 1,
+  },
+  brandTitle: {
     fontSize: 28,
     fontWeight: 'bold',
     color: colors.yellow.primary,
-    letterSpacing: 3,
+    letterSpacing: 2,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 0,
   },
-  headerSubtitle: {
-    fontSize: 20,
+  brandSubtitle: {
+    fontSize: 18,
     fontWeight: 'bold',
     color: colors.text.primary,
-    letterSpacing: 2,
+    letterSpacing: 1.5,
   },
-  headerTagline: {
+  brandTagline: {
     fontSize: 13,
-    color: colors.text.muted,
+    color: colors.text.secondary,
     textAlign: 'center',
-    marginTop: 8,
+    marginTop: 4,
   },
   searchContainer: {
     flexDirection: 'row',

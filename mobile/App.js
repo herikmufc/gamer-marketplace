@@ -5,6 +5,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import { ActivityIndicator, View, Text, StyleSheet, Linking, Alert } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import AnimatedSplashScreen from './src/screens/AnimatedSplashScreen';
 
 // Screens
@@ -48,10 +49,14 @@ function AuthStack() {
 }
 
 // Home Tab Icon
-function TabIcon({ label, icon, focused }) {
+function TabIcon({ label, iconName, focused }) {
   return (
     <View style={styles.tabIcon}>
-      <Text style={styles.tabIconText}>{icon}</Text>
+      <Ionicons
+        name={iconName}
+        size={24}
+        color={focused ? colors.yellow.primary : colors.text.muted}
+      />
       <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>
         {label}
       </Text>
@@ -74,7 +79,7 @@ function MainTabs() {
         component={HomeScreen}
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon label="Início" icon="🏠" focused={focused} />
+            <TabIcon label="Início" iconName="home" focused={focused} />
           ),
         }}
       />
@@ -83,7 +88,7 @@ function MainTabs() {
         component={EventsScreen}
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon label="Eventos" icon="📅" focused={focused} />
+            <TabIcon label="Eventos" iconName="calendar" focused={focused} />
           ),
         }}
       />
@@ -92,7 +97,7 @@ function MainTabs() {
         component={ForumCategoriesScreen}
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon label="Fórum" icon="🎮" focused={focused} />
+            <TabIcon label="Fórum" iconName="game-controller" focused={focused} />
           ),
         }}
       />
@@ -101,7 +106,7 @@ function MainTabs() {
         component={CheatsScreen}
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon label="Cheats" icon="🎯" focused={focused} />
+            <TabIcon label="Cheats" iconName="key" focused={focused} />
           ),
         }}
       />
@@ -110,7 +115,7 @@ function MainTabs() {
         component={ChatListScreen}
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon label="Chat" icon="💬" focused={focused} />
+            <TabIcon label="Chat" iconName="chatbubbles" focused={focused} />
           ),
         }}
       />
@@ -119,7 +124,7 @@ function MainTabs() {
         component={ProfileScreen}
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon label="Perfil" icon="👤" focused={focused} />
+            <TabIcon label="Perfil" iconName="person" focused={focused} />
           ),
         }}
       />
