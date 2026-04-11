@@ -21,6 +21,80 @@ else:
     print("⚠️ GEMINI_API_KEY não configurada")
 
 
+def search_cheats_with_ai(game_title: str, console: Optional[str] = None) -> List[Dict[str, Any]]:
+    """
+    Busca cheats usando Gemini AI - acesso ilimitado a todos os cheats conhecidos
+
+    Args:
+        game_title: Nome do jogo
+        console: Console/plataforma (opcional, ajuda a filtrar)
+
+    Returns:
+        Lista de cheats encontrados pela IA
+    """
+    if not GEMINI_API_KEY:
+        return []
+
+    try:
+        model = genai.GenerativeModel('models/gemini-2.5-flash')
+
+        console_filter = f" para {console}" if console else ""
+
+        prompt = f"""Você é uma enciclopédia de cheats e códigos secretos de videogames.
+
+Busque TODOS os cheats, códigos secretos, senhas, glitches e macetes conhecidos para:
+
+**Jogo:** {game_title}{console_filter}
+
+Para CADA cheat encontrado, retorne no formato JSON exato:
+
+```json
+[
+  {{
+    "cheat_title": "Nome do cheat (ex: 30 Vidas, Jetpack, Invencibilidade)",
+    "cheat_code": "Código exato (setas, botões, senha, glitch detalhado)",
+    "cheat_type": "button_combo | password | glitch | secret | unlock | technique",
+    "description": "O que o cheat faz (breve, 1 linha)",
+    "difficulty": "easy | medium | hard",
+    "verified": true
+  }}
+]
+```
+
+**IMPORTANTE:**
+- Liste TODOS os cheats conhecidos (não limite a 5-10, quero TODOS)
+- Use setas: ↑ ↓ ← →
+- Botões PlayStation: △ ○ X ■ L1 L2 R1 R2
+- Botões Xbox/Nintendo: A B X Y LB LT RB RT
+- Seja específico nos códigos (onde inserir, quando pressionar)
+- Se não encontrar cheats, retorne array vazio []
+
+Retorne APENAS o JSON, sem explicações."""
+
+        response = model.generate_content(prompt)
+        text = response.text.strip()
+
+        # Remove markdown code blocks se existirem
+        if "```json" in text:
+            text = text.split("```json")[1].split("```")[0].strip()
+        elif "```" in text:
+            text = text.split("```")[1].split("```")[0].strip()
+
+        # Parse JSON
+        import json
+        cheats = json.loads(text)
+
+        if isinstance(cheats, list):
+            print(f"🤖 IA encontrou {len(cheats)} cheats para {game_title}")
+            return cheats
+        else:
+            return []
+
+    except Exception as e:
+        print(f"❌ Erro ao buscar cheats com IA: {e}")
+        return []
+
+
 def identify_game_from_image(image_data: bytes, image_format: str = "jpeg") -> Dict[str, Any]:
     """
     Identify retro game from image using Gemini Vision

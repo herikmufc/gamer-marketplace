@@ -1793,37 +1793,184 @@ async def get_games(
 async def get_game_cheats(
     game_title: str,
     console: Optional[str] = None,
+    use_ai: bool = True,
     db: Session = Depends(get_db)
 ):
-    """Lista todos os cheats de um jogo específico"""
-    query = db.query(Cheat).filter(Cheat.game_title == game_title)
+    """
+    Lista cheats de um jogo - SISTEMA HÍBRIDO (Banco + IA)
 
+    1. Busca no banco local (rápido, cache)
+    2. Se não encontrar E use_ai=True, busca com Gemini AI (ilimitado!)
+    3. Salva os cheats da IA no banco para próximas consultas
+    """
+    # Busca no banco local
+    query = db.query(Cheat).filter(Cheat.game_title.ilike(f"%{game_title}%"))
     if console:
         query = query.filter(Cheat.console == console)
 
-    cheats = query.order_by(desc(Cheat.upvotes)).all()
-    return cheats
+    local_cheats = query.order_by(desc(Cheat.upvotes)).all()
+
+    # Se encontrou no banco, retorna
+    if local_cheats:
+        print(f"💾 {len(local_cheats)} cheats encontrados no banco para {game_title}")
+        return local_cheats
+
+    # Se não encontrou E IA está habilitada, busca com IA
+    if use_ai:
+        print(f"🤖 Buscando cheats com IA para: {game_title}")
+        from gemini_client import search_cheats_with_ai
+
+        ai_cheats = search_cheats_with_ai(game_title, console)
+
+        if ai_cheats:
+            # Salva os cheats da IA no banco para cache
+            saved_cheats = []
+            for cheat_data in ai_cheats:
+                try:
+                    # Verifica duplicata
+                    existing = db.query(Cheat).filter(
+                        Cheat.game_title == game_title,
+                        Cheat.cheat_title == cheat_data.get("cheat_title")
+                    ).first()
+
+                    if not existing:
+                        new_cheat = Cheat(
+                            game_title=game_title,
+                            console=console or "Unknown",
+                            genre=cheat_data.get("genre", "Unknown"),
+                            cheat_title=cheat_data.get("cheat_title"),
+                            cheat_code=cheat_data.get("cheat_code"),
+                            cheat_type=cheat_data.get("cheat_type", "secret"),
+                            description=cheat_data.get("description"),
+                            difficulty=cheat_data.get("difficulty", "medium"),
+                            verified=cheat_data.get("verified", False),
+                            upvotes=0
+                        )
+                        db.add(new_cheat)
+                        saved_cheats.append(new_cheat)
+                except Exception as e:
+                    print(f"⚠️ Erro ao salvar cheat: {e}")
+                    continue
+
+            if saved_cheats:
+                try:
+                    db.commit()
+                    print(f"✅ {len(saved_cheats)} cheats da IA salvos no banco")
+                    # Refresh para pegar IDs
+                    for cheat in saved_cheats:
+                        db.refresh(cheat)
+                    return saved_cheats
+                except Exception as e:
+                    print(f"❌ Erro no commit: {e}")
+                    db.rollback()
+                    # Retorna os dados da IA mesmo sem salvar
+                    return [Cheat(**{
+                        **cheat_data,
+                        "game_title": game_title,
+                        "console": console or "Unknown",
+                        "genre": cheat_data.get("genre", "Unknown"),
+                        "upvotes": 0,
+                        "id": None
+                    }) for cheat_data in ai_cheats]
+            else:
+                # Retorna dados da IA diretamente (sem salvar no banco)
+                return [Cheat(**{
+                    **cheat_data,
+                    "game_title": game_title,
+                    "console": console or "Unknown",
+                    "genre": cheat_data.get("genre", "Unknown"),
+                    "upvotes": 0,
+                    "id": None
+                }) for cheat_data in ai_cheats]
+
+    # Não encontrou nada
+    return []
 
 @app.get("/cheats/search")
 async def search_cheats(
     q: str,
     console: Optional[str] = None,
+    use_ai: bool = True,
     db: Session = Depends(get_db)
 ):
-    """Busca cheats por título do jogo ou descrição do cheat"""
+    """
+    Busca cheats - SISTEMA HÍBRIDO (Banco + IA)
+
+    Busca no banco local primeiro. Se não encontrar nada, usa IA.
+    """
+    # Busca no banco local
     query = db.query(Cheat).filter(
         or_(
-            Cheat.game_title.contains(q),
-            Cheat.cheat_title.contains(q),
-            Cheat.description.contains(q)
+            Cheat.game_title.ilike(f"%{q}%"),
+            Cheat.cheat_title.ilike(f"%{q}%"),
+            Cheat.description.ilike(f"%{q}%")
         )
     )
 
     if console:
         query = query.filter(Cheat.console == console)
 
-    cheats = query.order_by(desc(Cheat.upvotes)).limit(50).all()
-    return cheats
+    local_cheats = query.order_by(desc(Cheat.upvotes)).limit(50).all()
+
+    # Se encontrou no banco, retorna
+    if local_cheats:
+        print(f"💾 {len(local_cheats)} cheats encontrados no banco para '{q}'")
+        return local_cheats
+
+    # Se não encontrou E IA está habilitada, busca com IA
+    if use_ai:
+        print(f"🤖 Buscando '{q}' com IA...")
+        from gemini_client import search_cheats_with_ai
+
+        ai_cheats = search_cheats_with_ai(q, console)
+
+        if ai_cheats:
+            print(f"✅ IA encontrou {len(ai_cheats)} cheats")
+            # Retorna dados da IA (já estão no formato certo)
+            return [Cheat(**{
+                **cheat_data,
+                "game_title": q,
+                "console": console or cheat_data.get("console", "Unknown"),
+                "genre": cheat_data.get("genre", "Unknown"),
+                "upvotes": 0,
+                "id": None
+            }) for cheat_data in ai_cheats]
+
+    return []
+
+@app.get("/cheats/ai-search/{game_title}")
+async def ai_search_cheats(
+    game_title: str,
+    console: Optional[str] = None
+):
+    """
+    🤖 BUSCA DIRETA COM IA - Biblioteca Ilimitada!
+
+    Força busca com Gemini AI, ignorando banco de dados.
+    Use para jogos obscuros ou quando quiser cheats frescos.
+    """
+    print(f"🤖 Busca IA forçada para: {game_title}")
+    from gemini_client import search_cheats_with_ai
+
+    ai_cheats = search_cheats_with_ai(game_title, console)
+
+    if ai_cheats:
+        return {
+            "source": "gemini_ai",
+            "game_title": game_title,
+            "console": console,
+            "count": len(ai_cheats),
+            "cheats": ai_cheats
+        }
+    else:
+        return {
+            "source": "gemini_ai",
+            "game_title": game_title,
+            "console": console,
+            "count": 0,
+            "cheats": [],
+            "message": "Nenhum cheat encontrado pela IA"
+        }
 
 @app.post("/cheats/{cheat_id}/vote")
 async def vote_cheat(
