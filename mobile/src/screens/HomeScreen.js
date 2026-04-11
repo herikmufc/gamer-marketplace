@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background.primary,
   },
   header: {
-    padding: 20,
+    paddingHorizontal: 0,
     paddingTop: 60,
     paddingBottom: 16,
     backgroundColor: colors.background.secondary,
@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
   },
   bannerImage: {
     width: '100%',
-    height: 240,
+    height: 280,
     marginBottom: 12,
   },
   taglineContainer: {
@@ -287,6 +287,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     paddingTop: 8,
+    paddingHorizontal: 20,
     borderTopWidth: 1,
     borderTopColor: colors.border.dark,
   },
