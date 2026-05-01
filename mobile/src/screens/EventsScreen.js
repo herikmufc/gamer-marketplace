@@ -234,7 +234,8 @@ export default function EventsScreen({ navigation }) {
       {/* Botão Descobrir com IA */}
       <View style={styles.discoverSection}>
         <RetroButton
-          title="🤖 Descobrir com IA"
+          title="Descobrir com IA"
+          icon={<RetroIcon name="cat-robot" size={24} />}
           onPress={discoverEvents}
           loading={discovering}
           variant="primary"

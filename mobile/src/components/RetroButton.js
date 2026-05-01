@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, View } from 'react-native';
 import { colors } from '../theme/colors';
 
 /**
@@ -53,10 +53,16 @@ export default function RetroButton({
       {loading ? (
         <ActivityIndicator color={colors.background.primary} />
       ) : (
-        <>
-          {icon && <Text style={styles.icon}>{icon}</Text>}
+        <View style={styles.content}>
+          {icon && (
+            typeof icon === 'string' ? (
+              <Text style={styles.icon}>{icon}</Text>
+            ) : (
+              <View style={styles.iconComponent}>{icon}</View>
+            )
+          )}
           <Text style={getTextStyle()}>{title}</Text>
-        </>
+        </View>
       )}
     </TouchableOpacity>
   );
@@ -167,5 +173,13 @@ const styles = StyleSheet.create({
 
   icon: {
     fontSize: 16,
+  },
+  content: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  iconComponent: {
+    marginRight: 4,
   },
 });
