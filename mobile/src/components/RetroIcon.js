@@ -113,9 +113,10 @@ const ICON_FILES = {
  *
  * @param {string} name - Nome do ícone (ver lista completa acima)
  * @param {number} size - Tamanho do ícone em pixels (default: 24)
+ * @param {string} color - Cor do ícone (opcional, para ícones monocromáticos)
  * @param {object} style - Estilos adicionais
  */
-export default function RetroIcon({ name, size = 24, style }) {
+export default function RetroIcon({ name, size = 24, color, style }) {
   const iconSource = ICON_FILES[name];
 
   if (!iconSource) {
@@ -131,6 +132,7 @@ export default function RetroIcon({ name, size = 24, style }) {
         {
           width: size,
           height: size,
+          tintColor: color, // Aplica cor ao ícone (funciona se PNG tiver transparência)
         },
         style,
       ]}
