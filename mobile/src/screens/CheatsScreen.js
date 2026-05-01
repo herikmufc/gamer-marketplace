@@ -11,7 +11,6 @@ import {
 } from 'react-native';
 import { colors } from '../theme/colors';
 import RetroCard from '../components/RetroCard';
-import RetroIcon from '../components/RetroIcon';
 
 const API_URL = 'https://gamer-marketplace.onrender.com';
 
@@ -223,9 +222,7 @@ export default function CheatsScreen() {
       {/* Search */}
       <View style={styles.searchContainer}>
         <View style={styles.searchInputContainer}>
-          <View style={styles.searchIconWrapper}>
-            <RetroIcon name="search" size={20} />
-          </View>
+          <Text style={styles.searchIcon}>🔍</Text>
           <TextInput
             style={styles.searchInput}
             placeholder="Buscar cheats..."
@@ -366,10 +363,9 @@ const styles = StyleSheet.create({
     shadowRadius: 0,
     elevation: 0,
   },
-  searchIconWrapper: {
+  searchIcon: {
+    fontSize: 18,
     marginRight: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   searchInput: {
     flex: 1,
