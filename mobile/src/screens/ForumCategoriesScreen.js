@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { colors } from '../theme/colors';
 import RetroCard from '../components/RetroCard';
+import RetroIcon from '../components/RetroIcon';
 
 export default function ForumCategoriesScreen({ navigation }) {
   const [expandedCategory, setExpandedCategory] = useState(null);
@@ -17,7 +18,7 @@ export default function ForumCategoriesScreen({ navigation }) {
     {
       id: 'hardware',
       name: 'Hardware',
-      icon: '⚙️',
+      icon: 'circuit',
       color: colors.sonic.blue,
       description: 'Discussões sobre hardware de PCs e componentes',
       subcategories: [
@@ -31,7 +32,7 @@ export default function ForumCategoriesScreen({ navigation }) {
     {
       id: 'consoles',
       name: 'Consoles',
-      icon: '🎮',
+      icon: 'console-stack',
       color: colors.yellow.primary,
       description: 'Tudo sobre consoles clássicos e modernos',
       subcategories: [
@@ -45,7 +46,7 @@ export default function ForumCategoriesScreen({ navigation }) {
     {
       id: 'jogos',
       name: 'Jogos',
-      icon: '🕹️',
+      icon: 'game-stack',
       color: '#FF6B35',
       description: 'Discussões sobre jogos de todas as plataformas',
       subcategories: [
@@ -59,7 +60,7 @@ export default function ForumCategoriesScreen({ navigation }) {
     {
       id: 'marketplace',
       name: 'Compra e Venda',
-      icon: '🛒',
+      icon: 'price-tag',
       color: '#4ECDC4',
       description: 'Compre, venda e troque jogos e hardware',
       subcategories: [
@@ -72,7 +73,7 @@ export default function ForumCategoriesScreen({ navigation }) {
     {
       id: 'modificacoes',
       name: 'Modificações e Reparos',
-      icon: '🔧',
+      icon: 'tools',
       color: '#F7B801',
       description: 'Tutoriais, mods e reparos',
       subcategories: [
@@ -85,7 +86,7 @@ export default function ForumCategoriesScreen({ navigation }) {
     {
       id: 'emulacao',
       name: 'Emulação',
-      icon: '📺',
+      icon: 'tv-retro',
       color: '#9B59B6',
       description: 'Emuladores e ROMs',
       subcategories: [
@@ -98,7 +99,7 @@ export default function ForumCategoriesScreen({ navigation }) {
     {
       id: 'comunidade',
       name: 'Comunidade',
-      icon: '👥',
+      icon: 'community',
       color: '#E74C3C',
       description: 'Bate-papo e off-topic',
       subcategories: [
@@ -184,7 +185,7 @@ export default function ForumCategoriesScreen({ navigation }) {
                       { backgroundColor: category.color },
                     ]}
                   >
-                    <Text style={styles.categoryIcon}>{category.icon}</Text>
+                    <RetroIcon name={category.icon} size={32} />
                   </View>
                   <View style={styles.categoryInfo}>
                     <Text style={styles.categoryName}>{category.name}</Text>

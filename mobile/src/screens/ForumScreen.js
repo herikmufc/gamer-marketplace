@@ -11,6 +11,7 @@ import {
 import axios from '../api/client';
 import { colors } from '../theme/colors';
 import RetroCard from '../components/RetroCard';
+import RetroIcon from '../components/RetroIcon';
 
 export default function ForumScreen({ navigation }) {
   const [posts, setPosts] = useState([]);
@@ -19,11 +20,11 @@ export default function ForumScreen({ navigation }) {
   const [selectedCategory, setSelectedCategory] = useState(null);
 
   const categories = [
-    { id: 'all', label: 'Todos', icon: '📝' },
-    { id: 'discussao', label: 'Discussão', icon: '💬' },
-    { id: 'duvida', label: 'Dúvida', icon: '❓' },
-    { id: 'dica', label: 'Dica', icon: '💡' },
-    { id: 'review', label: 'Review', icon: '⭐' },
+    { id: 'all', label: 'Todos', icon: 'forum' },
+    { id: 'discussao', label: 'Discussão', icon: 'discussion' },
+    { id: 'duvida', label: 'Dúvida', icon: 'question' },
+    { id: 'dica', label: 'Dica', icon: 'idea' },
+    { id: 'review', label: 'Review', icon: 'star' },
   ];
 
   useEffect(() => {
@@ -118,7 +119,7 @@ export default function ForumScreen({ navigation }) {
                 setSelectedCategory(item.id === 'all' ? null : item.id)
               }
             >
-              <Text style={styles.categoryIcon}>{item.icon}</Text>
+              <RetroIcon name={item.icon} size={20} style={styles.categoryIcon} />
               <Text
                 style={[
                   styles.categoryLabel,

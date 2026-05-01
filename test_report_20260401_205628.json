@@ -1,0 +1,44 @@
+{
+  "passed": 6,
+  "failed": 1,
+  "skipped": 0,
+  "tests": [
+    {
+      "name": "Health Check",
+      "status": "passed",
+      "response_code": 200
+    },
+    {
+      "name": "Root Endpoint",
+      "status": "passed",
+      "response_code": 200
+    },
+    {
+      "name": "Registro de Usuário",
+      "status": "failed",
+      "expected": 200,
+      "received": 500,
+      "error": "Internal Server Error"
+    },
+    {
+      "name": "Listar Produtos",
+      "status": "passed",
+      "response_code": 200
+    },
+    {
+      "name": "Buscar Produtos",
+      "status": "passed",
+      "response_code": 200
+    },
+    {
+      "name": "Listar Posts do Fórum",
+      "status": "passed",
+      "response_code": 200
+    },
+    {
+      "name": "Listar Eventos",
+      "status": "passed",
+      "response_code": 200
+    }
+  ]
+}

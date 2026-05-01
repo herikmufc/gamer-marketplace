@@ -1,0 +1,78 @@
+╔════════════════════════════════════════════════════════════╗
+║                                                            ║
+║           🎮 RETROTRADE BRASIL - COMO USAR                 ║
+║                                                            ║
+╚════════════════════════════════════════════════════════════╝
+
+📱 ABRIR O APP NO NAVEGADOR
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1️⃣  Abra o terminal
+
+2️⃣  Execute:
+
+    ./abrir-app.sh
+
+3️⃣  Aguarde abrir no navegador (~30 segundos)
+
+4️⃣  Acesse: http://localhost:19006
+
+✅ Pronto! O app está rodando!
+
+
+🔑 CREDENCIAIS DE TESTE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Use qualquer email/senha para criar uma conta de teste.
+
+Exemplo:
+  Email: teste@exemplo.com
+  Senha: 123456
+
+
+📖 DOCUMENTAÇÃO COMPLETA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+README.md                    → Visão geral do projeto
+ABRIR_APP_NO_NAVEGADOR.md    → Guia completo da versão web
+GUIA_TESTE_LOCAL.md          → Como testar localmente
+
+
+🛑 PARAR O APP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+No terminal onde o app está rodando:
+
+    Ctrl + C
+
+
+💡 DICAS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Funciona em qualquer navegador (Chrome, Firefox, Edge, Safari)
+✅ Não precisa instalar APK ou emulador
+✅ Hot reload: mudanças no código atualizam automaticamente
+✅ Abra F12 para ver logs e debugar
+
+
+🐛 PROBLEMAS?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Erro "porta em uso"?
+    lsof -ti:19006 | xargs kill -9
+
+Página em branco?
+    Ctrl + Shift + R (recarregar sem cache)
+
+Não compila?
+    cd mobile
+    rm -rf node_modules
+    npm install
+    npm run web
+
+
+═══════════════════════════════════════════════════════════════
+
+Pronto para começar! Execute: ./abrir-app.sh
+
+═══════════════════════════════════════════════════════════════

@@ -14,6 +14,7 @@ import { mercadopago } from '../api/client';
 import { colors } from '../theme/colors';
 import RetroButton from '../components/RetroButton';
 import RetroCard from '../components/RetroCard';
+import RetroIcon from '../components/RetroIcon';
 import { useFocusEffect } from '@react-navigation/native';
 
 export default function ProfileScreen({ navigation }) {
@@ -212,7 +213,7 @@ export default function ProfileScreen({ navigation }) {
       <View style={styles.menu}>
         <TouchableOpacity>
           <RetroCard style={styles.menuItem}>
-            <Text style={styles.menuIcon}>📦</Text>
+            <RetroIcon name="cartridge" size={28} />
             <Text style={styles.menuText}>Meus Anúncios</Text>
             <Text style={styles.menuArrow}>→</Text>
           </RetroCard>
@@ -220,7 +221,7 @@ export default function ProfileScreen({ navigation }) {
 
         <TouchableOpacity onPress={() => navigation.navigate('MyTransactions')}>
           <RetroCard style={styles.menuItem}>
-            <Text style={styles.menuIcon}>💳</Text>
+            <RetroIcon name="price-tag" size={28} />
             <Text style={styles.menuText}>Minhas Transações</Text>
             <Text style={styles.menuArrow}>→</Text>
           </RetroCard>
@@ -228,7 +229,7 @@ export default function ProfileScreen({ navigation }) {
 
         <TouchableOpacity>
           <RetroCard style={styles.menuItem}>
-            <Text style={styles.menuIcon}>❤️</Text>
+            <RetroIcon name="heart" size={28} />
             <Text style={styles.menuText}>Favoritos</Text>
             <Text style={styles.menuArrow}>→</Text>
           </RetroCard>
@@ -236,7 +237,7 @@ export default function ProfileScreen({ navigation }) {
 
         <TouchableOpacity>
           <RetroCard style={styles.menuItem}>
-            <Text style={styles.menuIcon}>💬</Text>
+            <RetroIcon name="chat" size={28} />
             <Text style={styles.menuText}>Conversas</Text>
             <Text style={styles.menuArrow}>→</Text>
           </RetroCard>
@@ -244,7 +245,7 @@ export default function ProfileScreen({ navigation }) {
 
         <TouchableOpacity>
           <RetroCard style={styles.menuItem}>
-            <Text style={styles.menuIcon}>🎮</Text>
+            <RetroIcon name="games" size={28} />
             <Text style={styles.menuText}>Minha Coleção</Text>
             <Text style={styles.menuArrow}>→</Text>
           </RetroCard>
@@ -252,7 +253,7 @@ export default function ProfileScreen({ navigation }) {
 
         <TouchableOpacity>
           <RetroCard style={styles.menuItem}>
-            <Text style={styles.menuIcon}>⚙️</Text>
+            <RetroIcon name="settings" size={28} />
             <Text style={styles.menuText}>Configurações</Text>
             <Text style={styles.menuArrow}>→</Text>
           </RetroCard>
@@ -260,7 +261,7 @@ export default function ProfileScreen({ navigation }) {
 
         <TouchableOpacity>
           <RetroCard style={styles.menuItem}>
-            <Text style={styles.menuIcon}>ℹ️</Text>
+            <RetroIcon name="info" size={28} />
             <Text style={styles.menuText}>Sobre</Text>
             <Text style={styles.menuArrow}>→</Text>
           </RetroCard>

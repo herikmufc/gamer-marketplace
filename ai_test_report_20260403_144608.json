@@ -1,0 +1,18 @@
+{
+  "timestamp": "20260403_144608",
+  "results": {
+    "Health Check": "PASS",
+    "Identificação de Jogos": "FAIL",
+    "Moderação de Chat": "FAIL",
+    "Descoberta de Eventos": "FAIL",
+    "Manutenção - Iniciar": "FAIL",
+    "Manutenção - Análise": "FAIL",
+    "Manutenção - Dicas": "FAIL",
+    "Manutenção - Diagnóstico": "FAIL"
+  },
+  "summary": {
+    "passed": 1,
+    "total": 8,
+    "percentage": 12.5
+  }
+}

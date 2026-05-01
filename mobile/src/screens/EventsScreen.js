@@ -12,6 +12,7 @@ import {
 import { colors } from '../theme/colors';
 import RetroButton from '../components/RetroButton';
 import RetroCard from '../components/RetroCard';
+import RetroIcon from '../components/RetroIcon';
 import { api } from '../api/client';
 
 const ESTADOS_BRASIL = [
@@ -54,10 +55,10 @@ const ESTADOS_BRASIL = [
 ];
 
 const EVENT_TYPES = {
-  feira: { icon: '🎪', label: 'Feira', color: colors.yellow.primary },
-  encontro: { icon: '🤝', label: 'Encontro', color: colors.sonic.blue },
-  campeonato: { icon: '🏆', label: 'Campeonato', color: colors.mario.red },
-  exposicao: { icon: '🎨', label: 'Exposição', color: colors.success },
+  feira: { icon: 'tent', label: 'Feira', color: colors.yellow.primary },
+  encontro: { icon: 'handshake', label: 'Encontro', color: colors.sonic.blue },
+  campeonato: { icon: 'trophy', label: 'Campeonato', color: colors.mario.red },
+  exposicao: { icon: 'gallery', label: 'Exposição', color: colors.success },
 };
 
 export default function EventsScreen({ navigation }) {
@@ -162,7 +163,7 @@ export default function EventsScreen({ navigation }) {
 
           {/* Tipo do Evento */}
           <View style={[styles.typeTag, { backgroundColor: eventType.color }]}>
-            <Text style={styles.typeIcon}>{eventType.icon}</Text>
+            <RetroIcon name={eventType.icon} size={20} />
             <Text style={styles.typeLabel}>{eventType.label}</Text>
           </View>
 
@@ -199,7 +200,7 @@ export default function EventsScreen({ navigation }) {
       {/* Header Retro */}
       <View style={styles.header}>
         <View style={styles.headerContent}>
-          <Text style={styles.headerIcon}>📅</Text>
+          <RetroIcon name="calendar" size={40} />
           <View>
             <Text style={styles.headerTitle}>Eventos Retro</Text>
             <Text style={styles.headerSubtitle}>Feiras, encontros e campeonatos</Text>

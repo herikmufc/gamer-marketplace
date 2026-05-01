@@ -10,11 +10,11 @@ import {
   RefreshControl,
   Image,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { products } from '../api/client';
 import { colors } from '../theme/colors';
 import RetroCard from '../components/RetroCard';
+import RetroIcon from '../components/RetroIcon';
 
 export default function HomeScreen({ navigation }) {
   const [productList, setProductList] = useState([]);
@@ -24,9 +24,9 @@ export default function HomeScreen({ navigation }) {
   const [selectedCategory, setSelectedCategory] = useState(null);
 
   const categories = [
-    { id: 'all', label: 'Todos', icon: '🎮' },
-    { id: 'console', label: 'Consoles', icon: '🕹️' },
-    { id: 'game', label: 'Jogos', icon: '👾' },
+    { id: 'all', label: 'Todos', icon: 'all' },
+    { id: 'console', label: 'Consoles', icon: 'consoles' },
+    { id: 'game', label: 'Jogos', icon: 'games' },
   ];
 
   useEffect(() => {
@@ -152,7 +152,7 @@ export default function HomeScreen({ navigation }) {
           resizeMode="cover"
         />
         <View style={styles.taglineContainer}>
-          <Ionicons name="game-controller" size={16} color={colors.text.secondary} />
+          <RetroIcon name="gamepad" size={20} />
           <Text style={styles.brandTagline}>Games Clássicos, Preços Modernos</Text>
         </View>
       </View>
@@ -193,7 +193,7 @@ export default function HomeScreen({ navigation }) {
                 setSelectedCategory(item.id === 'all' ? null : item.id)
               }
             >
-              <Text style={styles.categoryIcon}>{item.icon}</Text>
+              <RetroIcon name={item.icon} size={24} style={styles.categoryIcon} />
               <Text
                 style={[
                   styles.categoryLabel,
@@ -379,7 +379,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 0 },
   },
   categoryIcon: {
-    fontSize: 18,
     marginRight: 8,
   },
   categoryLabel: {

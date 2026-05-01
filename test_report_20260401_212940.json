@@ -1,0 +1,67 @@
+{
+  "passed": 13,
+  "failed": 0,
+  "skipped": 0,
+  "tests": [
+    {
+      "name": "Health Check",
+      "status": "passed",
+      "response_code": 200
+    },
+    {
+      "name": "Root Endpoint",
+      "status": "passed",
+      "response_code": 200
+    },
+    {
+      "name": "Registro de Usuário",
+      "status": "passed",
+      "response_code": 200
+    },
+    {
+      "name": "Obter Dados do Usuário (/me)",
+      "status": "passed",
+      "response_code": 200
+    },
+    {
+      "name": "Listar Produtos",
+      "status": "passed",
+      "response_code": 200
+    },
+    {
+      "name": "Buscar Produtos",
+      "status": "passed",
+      "response_code": 200
+    },
+    {
+      "name": "Listar Posts do Fórum",
+      "status": "passed",
+      "response_code": 200
+    },
+    {
+      "name": "Criar Post no Fórum",
+      "status": "passed",
+      "response_code": 200
+    },
+    {
+      "name": "Listar Eventos",
+      "status": "passed",
+      "response_code": 200
+    },
+    {
+      "name": "Listar Salas de Chat",
+      "status": "passed",
+      "response_code": 200
+    },
+    {
+      "name": "Listar Alertas de Moderação",
+      "status": "passed",
+      "response_code": 200
+    },
+    {
+      "name": "Listar Minhas Transações",
+      "status": "passed",
+      "response_code": 200
+    }
+  ]
+}
