@@ -12,6 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import RetroCard from '../components/RetroCard';
+import PageBanner from '../components/PageBanner';
 
 const API_URL = 'https://gamer-marketplace.onrender.com';
 
@@ -209,16 +210,8 @@ export default function CheatsScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerContent}>
-          <Ionicons name="key" size={32} color={colors.yellow.primary} />
-          <View style={styles.headerText}>
-            <Text style={styles.headerTitle}>CHEATS</Text>
-            <Text style={styles.headerSubtitle}>Códigos Secretos • Biblioteca Ilimitada</Text>
-          </View>
-        </View>
-      </View>
+      {/* Page Banner */}
+      <PageBanner source="cheats" />
 
       {/* Search */}
       <View style={styles.searchContainer}>
