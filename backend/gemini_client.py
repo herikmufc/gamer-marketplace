@@ -220,34 +220,101 @@ def discover_retro_gaming_events(state: str, city: Optional[str] = None) -> Dict
 
     location = f"{city}, {state}" if city else state
 
-    prompt = f"""Você é um especialista em eventos de cultura pop e jogos retro no Brasil.
+    prompt = f"""Você é um especialista em cultura de jogos retro e colecionismo no Brasil, com conhecimento profundo sobre as famosas "FEIRAS DO ROLO" e eventos de games clássicos.
 
-Liste eventos de jogos retro, feiras de games antigos, encontros de colecionadores em: {location}
+🎯 TAREFA: Pesquise e liste eventos REAIS de jogos retro, videogames clássicos e as tradicionais "feiras do rolo" no estado: {location}
 
-Inclua:
-- Eventos recorrentes (mensais, anuais)
-- Feiras de games retro
-- Encontros de colecionadores
-- Lojas especializadas que fazem eventos
-- Bares/cafés temáticos de jogos retro
+📍 TIPOS DE EVENTOS PARA BUSCAR:
 
-Responda em JSON:
+1. **FEIRAS DO ROLO** (PRIORIDADE MÁXIMA):
+   - Feiras populares onde se vende/troca games usados, consoles antigos
+   - Mercados de pulgas com seção de eletrônicos/games
+   - Feiras de antiguidades que incluem videogames
+   - Exemplos: "Feira do Rolo da Madrugada", "Feira da Benedito Calixto", "Feira do Bixiga"
+
+2. **EVENTOS OFICIAIS DE RETROGAMING**:
+   - Retro Game Experience, Retro Games Brasil, Brasil Game Show (área retro)
+   - Game XP, Festival do Videogame
+   - Eventos em shopping centers e espaços culturais
+
+3. **LOJAS ESPECIALIZADAS**:
+   - Lojas físicas que vendem games retro e fazem eventos/torneios
+   - Sebos de games, lojas de colecionáveis
+
+4. **BARES E ESPAÇOS TEMÁTICOS**:
+   - Bares com fliperama/arcade de jogos clássicos
+   - Espaços geek com videogames antigos
+
+5. **ENCONTROS DE COLECIONADORES**:
+   - Grupos locais que se reúnem para trocar/vender
+   - Comunidades em redes sociais que organizam encontros presenciais
+
+⚠️ INSTRUÇÕES IMPORTANTES:
+- Busque informações REAIS e verificáveis sobre eventos neste estado específico
+- Inclua feiras populares conhecidas da região (ex: feira da madrugada em SP, feira de Caxias no RJ)
+- Se souber de eventos anuais/mensais, mencione quando costumam ocorrer
+- EVITE inventar eventos fictícios - se não tiver certeza, seja honesto
+- Priorize eventos que já existem há anos e são tradicionais na região
+
+📋 FORMATO DA RESPOSTA (JSON):
 {{
   "events": [
     {{
-      "name": "Nome do Evento",
-      "type": "feira/encontro/loja/bar",
-      "location": "Local específico",
-      "frequency": "mensal/anual/pontual",
-      "description": "Descrição do evento",
-      "estimated_date": "Mês/período aproximado",
-      "contact": "Redes sociais ou contato se souber"
+      "name": "Nome real do evento/feira",
+      "type": "feira_do_rolo|evento_oficial|loja|bar|encontro",
+      "location": "Endereço/bairro específico se souber",
+      "frequency": "semanal|mensal|anual|irregular",
+      "description": "Descrição realista do que encontrar lá",
+      "estimated_date": "Dia/horário que costuma acontecer (ex: Todo sábado às 6h)",
+      "contact": "Instagram, site, telefone ou como encontrar",
+      "confidence": "alta|média|baixa - seu nível de certeza sobre a informação"
     }}
   ],
-  "suggestions": ["Dicas adicionais para encontrar eventos na região"]
+  "suggestions": ["Dicas práticas de onde procurar eventos nesta região"]
 }}
 
-Se não souber de eventos específicos, sugira como a pessoa pode procurar."""
+🔍 REFERÊNCIAS DE FEIRAS DO ROLO E EVENTOS CONHECIDOS:
+
+**SÃO PAULO (SP)**:
+- Feira da Madrugada do Brás (terça e quinta às 4h da manhã)
+- Feira da Benedito Calixto (sábados, Pinheiros)
+- Feira do Bixiga (domingos, Bela Vista)
+- Galeria do Rock (centro, lojas de games retro)
+- Retro Game Experience, Game XP
+- Lojas: Geek Store, The Shop, Mundo dos Cartuchos
+
+**RIO DE JANEIRO (RJ)**:
+- Feira de Caxias (fins de semana)
+- Saara (região de comércio popular)
+- Lojas na região do CEFET
+- Retro Game Brasil (eventos anuais)
+- Lojas: Game Over, Old School Games
+
+**MINAS GERAIS (MG)**:
+- Feira Hippie de BH (domingos, Av Afonso Pena)
+- Mercado Central de BH
+- Região da Savassi
+- Feira de Antiguidades (BH)
+
+**RIO GRANDE DO SUL (RS)**:
+- Brique da Redenção (domingos, Porto Alegre)
+- Brique do Largo Zumbi dos Palmares
+
+**PARANÁ (PR)**:
+- Feira do Largo da Ordem (domingos, Curitiba)
+- Rua 24 Horas (Curitiba)
+
+**PERNAMBUCO (PE)**:
+- Mercado de São José (Recife)
+- Polo de Confecções de Caruaru
+
+**BAHIA (BA)**:
+- Feira de São Joaquim (Salvador)
+- Mercado Modelo (Salvador)
+
+**Outros estados**: pesquise feiras populares, mercados municipais, e regiões de comércio popular conhecidas.
+
+🎯 Para o estado {location}, liste eventos REAIS conhecidos deste tipo."""
 
     response = model.generate_content(prompt)
 

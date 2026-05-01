@@ -103,10 +103,22 @@ export default function ProfileScreen({ navigation }) {
   };
 
   const handleLogout = () => {
-    Alert.alert('Sair', 'Deseja realmente sair?', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Sair', onPress: logout, style: 'destructive' },
-    ]);
+    console.log('🚪 [PROFILE] handleLogout chamado');
+
+    // No web, usar confirm nativo
+    if (typeof window !== 'undefined' && window.confirm) {
+      const confirmed = window.confirm('Deseja realmente sair da conta?');
+      console.log('🚪 [PROFILE] Confirmação:', confirmed);
+      if (confirmed) {
+        logout();
+      }
+    } else {
+      // Mobile nativo
+      Alert.alert('Sair', 'Deseja realmente sair?', [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Sair', onPress: logout, style: 'destructive' },
+      ]);
+    }
   };
 
   return (

@@ -91,7 +91,16 @@ export default function RegisterScreen({ navigation }) {
     }
 
     setLoading(true);
-    const result = await register(formData);
+
+    // Remover máscaras antes de enviar
+    const cleanData = {
+      ...formData,
+      cpf: formData.cpf.replace(/\D/g, ''),
+      phone: formData.phone.replace(/\D/g, ''),
+      address_zipcode: formData.address_zipcode.replace(/\D/g, ''),
+    };
+
+    const result = await register(cleanData);
     setLoading(false);
 
     if (!result.success) {

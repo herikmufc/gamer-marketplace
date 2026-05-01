@@ -2732,47 +2732,96 @@ Retorne APENAS o JSON array, sem texto antes ou depois:
 
 Se não encontrar eventos específicos, retorne array vazio []"""
 
-        # Usar Claude API
-        response = claude_client.messages.create(
-            model="claude-4-6-sonnet-20250929",
-            max_tokens=2000,
-            temperature=0.5,
-            messages=[
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ]
-        )
+        # Usar Gemini API com função específica
+        result = gemini_client.discover_retro_gaming_events(state=state)
 
-        ai_response = response.content[0].text
+        ai_response = result.get("text", "")
 
-        # Extrair JSON
-        json_start = ai_response.find('[')
-        json_end = ai_response.rfind(']') + 1
+        # Extrair JSON da resposta
+        import re
+        json_match = re.search(r'\{.*\}', ai_response, re.DOTALL)
+        if not json_match:
+            return {
+                "success": False,
+                "events_found": 0,
+                "message": "IA não retornou dados em formato válido",
+                "raw": ai_response
+            }
 
-        if json_start != -1 and json_end > json_start:
-            json_str = ai_response[json_start:json_end]
-            events_data = json.loads(json_str)
+        try:
+            ai_data = json.loads(json_match.group())
+            events_data = ai_data.get("events", [])
+        except json.JSONDecodeError:
+            return {
+                "success": False,
+                "events_found": 0,
+                "message": "Erro ao processar resposta da IA"
+            }
 
-            # Criar eventos no banco
-            created_events = []
-            for event_data in events_data:
+        # Criar eventos no banco
+        created_events = []
+        for event_data in events_data:
                 try:
+                    # Mapear campos do Gemini para o modelo Event
+                    title = event_data.get('name') or event_data.get('title', '')
+
+                    # VALIDAÇÃO: Pular eventos sem título
+                    if not title or len(title.strip()) < 3:
+                        print(f"⚠️ Pulando evento sem título válido: {event_data}")
+                        continue
+
+                    location_str = event_data.get('location', '')
+
+                    # Extrair cidade do location (pode vir como "Brás, São Paulo" ou só "São Paulo")
+                    city = location_str.split(',')[0].strip() if ',' in location_str else location_str
+                    if not city:
+                        city = state  # Usa o estado como fallback
+
+                    # Mapear tipo de evento
+                    event_type_map = {
+                        'feira_do_rolo': 'feira',
+                        'evento_oficial': 'encontro',
+                        'loja': 'feira',
+                        'bar': 'encontro',
+                        'encontro': 'encontro'
+                    }
+                    evt_type = event_type_map.get(event_data.get('type', 'feira'), 'feira')
+
+                    # Criar descrição completa
+                    description = event_data.get('description', '')
+
+                    # VALIDAÇÃO: Pular eventos sem descrição
+                    if not description or len(description.strip()) < 10:
+                        print(f"⚠️ Pulando evento '{title}' sem descrição válida")
+                        continue
+
+                    frequency = event_data.get('frequency', '')
+                    contact = event_data.get('contact', '')
+
+                    full_description = f"{description}\n\n"
+                    if frequency:
+                        full_description += f"📅 Frequência: {frequency}\n"
+                    if contact:
+                        full_description += f"📞 Contato: {contact}\n"
+
+                    # Data estimada (usar data futura genérica)
+                    from datetime import datetime, timedelta
+                    start_date = datetime.now() + timedelta(days=30)
+
                     new_event = Event(
-                        title=event_data.get('title', ''),
-                        description=event_data.get('description', ''),
-                        event_type=event_data.get('event_type', 'feira'),
+                        title=title,
+                        description=full_description.strip(),
+                        event_type=evt_type,
                         state=state.upper(),
-                        city=event_data.get('city', ''),
-                        address=event_data.get('address'),
-                        start_date=datetime.strptime(event_data.get('start_date', '2026-12-31'), '%Y-%m-%d'),
-                        end_date=datetime.strptime(event_data.get('end_date'), '%Y-%m-%d') if event_data.get('end_date') else None,
-                        organizer=event_data.get('organizer'),
-                        website=event_data.get('website'),
-                        source_url=event_data.get('source_info', 'AI Discovery'),
+                        city=city,
+                        address=location_str,
+                        start_date=start_date,
+                        end_date=None,
+                        organizer=event_data.get('organizer', 'Comunidade'),
+                        website=contact if contact.startswith('http') else None,
+                        source_url='AI Discovery - Gemini',
                         created_by='ai',
-                        is_verified=False  # Precisa verificação manual
+                        is_verified=False
                     )
                     db.add(new_event)
                     db.commit()
@@ -2782,19 +2831,12 @@ Se não encontrar eventos específicos, retorne array vazio []"""
                     print(f"Erro ao criar evento: {e}")
                     continue
 
-            return {
-                "success": True,
-                "events_found": len(created_events),
-                "events": created_events,
-                "message": f"IA descobriu {len(created_events)} eventos em {state}"
-            }
-        else:
-            return {
-                "success": False,
-                "events_found": 0,
-                "message": "IA não encontrou eventos no formato esperado",
-                "raw_response": ai_response
-            }
+        return {
+            "success": True,
+            "events_found": len(created_events),
+            "events": created_events,
+            "message": f"IA descobriu {len(created_events)} eventos em {state}"
+        }
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao buscar eventos: {str(e)}")

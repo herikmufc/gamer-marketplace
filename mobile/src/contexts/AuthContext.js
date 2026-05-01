@@ -87,8 +87,21 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
-    await auth.logout();
-    setUser(null);
+    try {
+      console.log('🚪 [LOGOUT] Iniciando logout...');
+      await auth.logout();
+      console.log('✅ [LOGOUT] Token removido');
+      setUser(null);
+      console.log('✅ [LOGOUT] User state limpo');
+
+      // Force reload para garantir que o estado é limpo completamente
+      if (typeof window !== 'undefined') {
+        console.log('🔄 [LOGOUT] Recarregando página (web)...');
+        setTimeout(() => window.location.reload(), 100);
+      }
+    } catch (error) {
+      console.error('❌ [LOGOUT] Erro:', error);
+    }
   };
 
   return (
