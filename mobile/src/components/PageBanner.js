@@ -11,13 +11,13 @@ export default function PageBanner({ source }) {
   console.log('🎨 PageBanner rendering:', source);
 
   const banners = {
-    inicio: require('../../assets/banners/inicio_v2.png'),
-    eventos: require('../../assets/banners/eventos_v2.png'),
-    forum: require('../../assets/banners/forum_v2.png'),
-    cheats: require('../../assets/banners/cheats_v2.png'),
-    manutencao: require('../../assets/banners/manutencao_v2.png'),
-    chat: require('../../assets/banners/chat_v2.png'),
-    perfil: require('../../assets/banners/perfil_v2.png'),
+    inicio: require('../../assets/banners/banner_inicio.png'),
+    eventos: require('../../assets/banners/banner_eventos.png'),
+    forum: require('../../assets/banners/banner_forum.png'),
+    cheats: require('../../assets/banners/banner_cheats.png'),
+    manutencao: require('../../assets/banners/banner_manutencao.png'),
+    chat: require('../../assets/banners/banner_chat.png'),
+    perfil: require('../../assets/banners/banner_perfil.png'),
   };
 
   const bannerSource = banners[source];
