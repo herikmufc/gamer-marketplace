@@ -223,7 +223,9 @@ export default function CheatsScreen() {
       {/* Search */}
       <View style={styles.searchContainer}>
         <View style={styles.searchInputContainer}>
-          <RetroIcon name="search" size={20} style={styles.searchIcon} />
+          <View style={styles.searchIconWrapper}>
+            <RetroIcon name="search" size={20} />
+          </View>
           <TextInput
             style={styles.searchInput}
             placeholder="Buscar cheats..."
@@ -364,8 +366,10 @@ const styles = StyleSheet.create({
     shadowRadius: 0,
     elevation: 0,
   },
-  searchIcon: {
+  searchIconWrapper: {
     marginRight: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   searchInput: {
     flex: 1,
