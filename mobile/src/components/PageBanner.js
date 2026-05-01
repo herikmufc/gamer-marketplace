@@ -28,6 +28,7 @@ export default function PageBanner({ source }) {
   return (
     <View style={styles.container}>
       <Image
+        key={`banner-${source}-v2`}
         source={bannerSource}
         style={styles.banner}
         resizeMode="cover"
