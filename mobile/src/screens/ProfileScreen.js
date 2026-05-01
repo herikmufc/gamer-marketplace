@@ -158,7 +158,10 @@ export default function ProfileScreen({ navigation }) {
 
       {/* Mercado Pago Status */}
       <View style={styles.mpSection}>
-        <Text style={styles.mpTitle}>💳 MERCADO PAGO</Text>
+        <View style={styles.mpTitleContainer}>
+          <RetroIcon name="price-tag" size={20} />
+          <Text style={styles.mpTitle}>MERCADO PAGO</Text>
+        </View>
 
         {loadingMp ? (
           <RetroCard style={styles.mpCard}>
@@ -188,7 +191,7 @@ export default function ProfileScreen({ navigation }) {
         ) : (
           <RetroCard style={styles.mpCard}>
             <View style={styles.mpHeader}>
-              <Text style={styles.mpIcon}>⚠️</Text>
+              <RetroIcon name="warning" size={32} />
               <View style={styles.mpInfo}>
                 <Text style={styles.mpStatusTitle}>Conecte sua Conta</Text>
                 <Text style={styles.mpStatusText}>
@@ -269,14 +272,12 @@ export default function ProfileScreen({ navigation }) {
       </View>
 
       {/* Logout */}
-      <RetroButton
-        title="Sair da Conta"
-        icon="🚪"
-        onPress={handleLogout}
-        variant="danger"
-        size="large"
-        style={styles.logoutButton}
-      />
+      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+        <RetroCard style={styles.logoutCard}>
+          <RetroIcon name="close" size={28} />
+          <Text style={styles.logoutText}>SAIR DA CONTA</Text>
+        </RetroCard>
+      </TouchableOpacity>
 
       <View style={{ height: 40 }} />
     </ScrollView>
@@ -393,15 +394,35 @@ const styles = StyleSheet.create({
   logoutButton: {
     margin: 20,
   },
+  logoutCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    gap: 12,
+    backgroundColor: colors.error || '#E74C3C',
+  },
+  logoutText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.text.primary,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
   mpSection: {
     paddingHorizontal: 20,
     marginBottom: 20,
+  },
+  mpTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
   },
   mpTitle: {
     fontSize: 14,
     fontWeight: 'bold',
     color: colors.yellow.primary,
-    marginBottom: 12,
     letterSpacing: 1,
   },
   mpCard: {

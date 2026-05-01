@@ -16,6 +16,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../theme/colors';
 import { api, maintenance } from '../api/client';
+import RetroIcon from '../components/RetroIcon';
 
 export default function MaintenanceScreen() {
   const [messages, setMessages] = useState([]);
@@ -243,14 +244,14 @@ export default function MaintenanceScreen() {
             style={styles.imageButton}
             onPress={pickImage}
           >
-            <Text style={styles.imageButtonText}>🖼️</Text>
+            <RetroIcon name="gallery" size={24} />
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.imageButton}
             onPress={takePhoto}
           >
-            <Text style={styles.imageButtonText}>📸</Text>
+            <RetroIcon name="camera" size={24} />
           </TouchableOpacity>
 
           <TextInput
@@ -271,7 +272,7 @@ export default function MaintenanceScreen() {
             onPress={sendMessage}
             disabled={!inputText.trim() && selectedImages.length === 0}
           >
-            <Text style={styles.sendButtonText}>➤</Text>
+            <RetroIcon name="send" size={20} />
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>

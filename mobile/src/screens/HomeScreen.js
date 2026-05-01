@@ -213,7 +213,7 @@ export default function HomeScreen({ navigation }) {
         onPress={() => navigation.navigate('IdentifyGame')}
       >
         <View style={styles.aiBannerContent}>
-          <Text style={styles.aiBannerIcon}>🤖</Text>
+          <RetroIcon name="cat-robot" size={48} />
           <View style={styles.aiBannerText}>
             <Text style={styles.aiBannerTitle}>Identificação por IA</Text>
             <Text style={styles.aiBannerSubtitle}>

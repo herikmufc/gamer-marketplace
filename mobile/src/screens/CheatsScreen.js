@@ -9,9 +9,9 @@ import {
   ActivityIndicator,
   ScrollView,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import RetroCard from '../components/RetroCard';
+import RetroIcon from '../components/RetroIcon';
 
 const API_URL = 'https://gamer-marketplace.onrender.com';
 
@@ -223,7 +223,7 @@ export default function CheatsScreen() {
       {/* Search */}
       <View style={styles.searchContainer}>
         <View style={styles.searchInputContainer}>
-          <Text style={styles.searchIcon}>🔍</Text>
+          <RetroIcon name="search" size={20} style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
             placeholder="Buscar cheats..."
@@ -365,7 +365,6 @@ const styles = StyleSheet.create({
     elevation: 0,
   },
   searchIcon: {
-    fontSize: 18,
     marginRight: 8,
   },
   searchInput: {

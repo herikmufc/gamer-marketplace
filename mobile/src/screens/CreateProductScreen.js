@@ -17,6 +17,7 @@ import { colors } from '../theme/colors';
 import RetroButton from '../components/RetroButton';
 import RetroCard from '../components/RetroCard';
 import MercadoPagoAuthModal from '../components/MercadoPagoAuthModal';
+import RetroIcon from '../components/RetroIcon';
 
 export default function CreateProductScreen({ navigation }) {
   const [formData, setFormData] = useState({
@@ -61,9 +62,9 @@ export default function CreateProductScreen({ navigation }) {
   };
 
   const categories = [
-    { id: 'console', label: 'Console', icon: '🕹️' },
-    { id: 'game', label: 'Jogo', icon: '👾' },
-    { id: 'peripheral', label: 'Periférico', icon: '🎧' },
+    { id: 'console', label: 'Console', icon: 'consoles' },
+    { id: 'game', label: 'Jogo', icon: 'games' },
+    { id: 'peripheral', label: 'Periférico', icon: 'peripherals' },
   ];
 
   const pickImages = async () => {
@@ -290,7 +291,7 @@ export default function CreateProductScreen({ navigation }) {
               ]}
               onPress={() => setFormData({ ...formData, category: cat.id })}
             >
-              <Text style={styles.categoryIcon}>{cat.icon}</Text>
+              <RetroIcon name={cat.icon} size={24} />
               <Text
                 style={[
                   styles.categoryChipText,
