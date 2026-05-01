@@ -9,6 +9,7 @@ import {
 import { colors } from '../theme/colors';
 import RetroCard from '../components/RetroCard';
 import RetroIcon from '../components/RetroIcon';
+import PageBanner from '../components/PageBanner';
 
 export default function ForumCategoriesScreen({ navigation }) {
   const [expandedCategory, setExpandedCategory] = useState(null);
@@ -133,13 +134,8 @@ export default function ForumCategoriesScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>🎮 FÓRUM RETROTRADE</Text>
-        <Text style={styles.headerSubtitle}>
-          A maior comunidade de games clássicos do Brasil
-        </Text>
-      </View>
+      {/* Page Banner */}
+      <PageBanner source="forum" />
 
       {/* Stats Bar */}
       <View style={styles.statsBar}>
