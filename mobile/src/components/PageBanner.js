@@ -39,9 +39,8 @@ export default function PageBanner({ source }) {
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-    height: 200, // Altura fixa para garantir visibilidade
+    height: 200,
     overflow: 'hidden',
-    backgroundColor: '#FF6B35', // Laranja temporário para debug
   },
   banner: {
     width: '100%',
