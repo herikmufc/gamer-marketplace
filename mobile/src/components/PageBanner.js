@@ -40,7 +40,7 @@ export default function PageBanner({ source }) {
       />
       {/* Debug overlay */}
       <View style={styles.debugOverlay}>
-        {/* <Text style={styles.debugText}>{source}</Text> */}
+        <Text style={styles.debugText}>Banner: {source}</Text>
       </View>
     </View>
   );
