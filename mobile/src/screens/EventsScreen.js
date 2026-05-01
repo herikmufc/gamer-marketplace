@@ -15,16 +15,42 @@ import RetroCard from '../components/RetroCard';
 import { api } from '../api/client';
 
 const ESTADOS_BRASIL = [
-  { sigla: 'SP', nome: 'São Paulo' },
-  { sigla: 'RJ', nome: 'Rio de Janeiro' },
-  { sigla: 'MG', nome: 'Minas Gerais' },
-  { sigla: 'RS', nome: 'Rio Grande do Sul' },
-  { sigla: 'PR', nome: 'Paraná' },
-  { sigla: 'SC', nome: 'Santa Catarina' },
-  { sigla: 'BA', nome: 'Bahia' },
-  { sigla: 'PE', nome: 'Pernambuco' },
-  { sigla: 'CE', nome: 'Ceará' },
-  { sigla: 'DF', nome: 'Distrito Federal' },
+  // Região Sudeste
+  { sigla: 'SP', nome: 'São Paulo', regiao: 'Sudeste' },
+  { sigla: 'RJ', nome: 'Rio de Janeiro', regiao: 'Sudeste' },
+  { sigla: 'MG', nome: 'Minas Gerais', regiao: 'Sudeste' },
+  { sigla: 'ES', nome: 'Espírito Santo', regiao: 'Sudeste' },
+
+  // Região Sul
+  { sigla: 'RS', nome: 'Rio Grande do Sul', regiao: 'Sul' },
+  { sigla: 'PR', nome: 'Paraná', regiao: 'Sul' },
+  { sigla: 'SC', nome: 'Santa Catarina', regiao: 'Sul' },
+
+  // Região Nordeste
+  { sigla: 'BA', nome: 'Bahia', regiao: 'Nordeste' },
+  { sigla: 'PE', nome: 'Pernambuco', regiao: 'Nordeste' },
+  { sigla: 'CE', nome: 'Ceará', regiao: 'Nordeste' },
+  { sigla: 'MA', nome: 'Maranhão', regiao: 'Nordeste' },
+  { sigla: 'PI', nome: 'Piauí', regiao: 'Nordeste' },
+  { sigla: 'RN', nome: 'Rio Grande do Norte', regiao: 'Nordeste' },
+  { sigla: 'PB', nome: 'Paraíba', regiao: 'Nordeste' },
+  { sigla: 'AL', nome: 'Alagoas', regiao: 'Nordeste' },
+  { sigla: 'SE', nome: 'Sergipe', regiao: 'Nordeste' },
+
+  // Região Norte
+  { sigla: 'AM', nome: 'Amazonas', regiao: 'Norte' },
+  { sigla: 'PA', nome: 'Pará', regiao: 'Norte' },
+  { sigla: 'AC', nome: 'Acre', regiao: 'Norte' },
+  { sigla: 'RO', nome: 'Rondônia', regiao: 'Norte' },
+  { sigla: 'RR', nome: 'Roraima', regiao: 'Norte' },
+  { sigla: 'AP', nome: 'Amapá', regiao: 'Norte' },
+  { sigla: 'TO', nome: 'Tocantins', regiao: 'Norte' },
+
+  // Região Centro-Oeste
+  { sigla: 'DF', nome: 'Distrito Federal', regiao: 'Centro-Oeste' },
+  { sigla: 'GO', nome: 'Goiás', regiao: 'Centro-Oeste' },
+  { sigla: 'MT', nome: 'Mato Grosso', regiao: 'Centro-Oeste' },
+  { sigla: 'MS', nome: 'Mato Grosso do Sul', regiao: 'Centro-Oeste' },
 ];
 
 const EVENT_TYPES = {
@@ -54,7 +80,18 @@ export default function EventsScreen({ navigation }) {
           upcoming_only: true,
         },
       });
-      setEvents(response.data || []);
+
+      // Filtrar eventos válidos (com título, id e data)
+      const validEvents = (response.data || []).filter(event =>
+        event &&
+        event.id &&
+        event.title &&
+        event.title.trim().length > 0 &&
+        event.start_date
+      );
+
+      console.log(`📊 [EVENTOS] Total: ${response.data?.length || 0}, Válidos: ${validEvents.length}`);
+      setEvents(validEvents);
     } catch (error) {
       console.error('Erro ao carregar eventos:', error);
     } finally {
@@ -65,19 +102,25 @@ export default function EventsScreen({ navigation }) {
   const discoverEvents = async () => {
     try {
       setDiscovering(true);
-      const response = await api.post('/events/discover', {
-        state: selectedState,
-      });
+      console.log(`🔍 [EVENTOS] Descobrindo eventos em ${selectedState}...`);
+
+      // State deve ser enviado como query parameter, não no body
+      const response = await api.post(`/events/discover?state=${selectedState}`);
+
+      console.log('📊 [EVENTOS] Resposta da IA:', response.data);
 
       if (response.data.success && response.data.events_found > 0) {
-        alert(`🎉 IA descobriu ${response.data.events_found} eventos em ${selectedState}!`);
-        loadEvents();
+        console.log(`✅ [EVENTOS] ${response.data.events_found} eventos encontrados!`);
+        alert(`🎉 IA descobriu ${response.data.events_found} eventos em ${selectedState}!\n\n${response.data.message}`);
+        await loadEvents();
       } else {
-        alert(`😔 IA não encontrou novos eventos em ${selectedState}`);
+        console.log('⚠️ [EVENTOS] Nenhum evento novo encontrado');
+        alert(`😔 IA não encontrou novos eventos em ${selectedState}\n\nDica: A IA pode já ter descoberto eventos anteriormente para este estado. Verifique a lista abaixo.`);
       }
     } catch (error) {
-      console.error('Erro ao descobrir eventos:', error);
-      alert('Erro ao descobrir eventos. Tente novamente.');
+      console.error('❌ [EVENTOS] Erro ao descobrir:', error);
+      console.error('❌ [EVENTOS] Detalhes:', error.response?.data);
+      alert(`Erro ao descobrir eventos: ${error.response?.data?.detail || error.message}`);
     } finally {
       setDiscovering(false);
     }
@@ -99,6 +142,12 @@ export default function EventsScreen({ navigation }) {
   };
 
   const renderEvent = ({ item }) => {
+    // Validar se o evento tem dados mínimos necessários
+    if (!item || !item.id || !item.title || !item.start_date) {
+      console.warn('⚠️ Evento inválido:', item);
+      return null;
+    }
+
     const eventType = EVENT_TYPES[item.event_type] || EVENT_TYPES.feira;
 
     return (
@@ -247,8 +296,8 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: 20,
     paddingHorizontal: 20,
-    borderBottomWidth: 3,
-    borderBottomColor: colors.yellow.primary,
+    borderBottomWidth: 4,
+    borderBottomColor: colors.text.primary,
   },
   headerContent: {
     flexDirection: 'row',
@@ -264,11 +313,13 @@ const styles = StyleSheet.create({
     color: colors.yellow.primary,
     textTransform: 'uppercase',
     letterSpacing: 1,
+    fontFamily: 'monospace',
   },
   headerSubtitle: {
     fontSize: 14,
     color: colors.text.secondary,
     marginTop: 4,
+    fontFamily: 'monospace',
   },
   stateSelector: {
     backgroundColor: colors.background.secondary,
@@ -289,23 +340,31 @@ const styles = StyleSheet.create({
   stateButton: {
     paddingHorizontal: 20,
     paddingVertical: 8,
-    borderRadius: 20,
+    borderRadius: 4,
     backgroundColor: colors.background.tertiary,
-    borderWidth: 2,
-    borderColor: colors.border.dark,
+    borderWidth: 3,
+    borderColor: colors.text.primary,
     marginRight: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 0,
   },
   stateButtonActive: {
     backgroundColor: colors.yellow.primary,
-    borderColor: colors.yellow.dark,
+    borderColor: colors.text.primary,
+    transform: [{ translateY: 2 }, { translateX: 2 }],
+    shadowOffset: { width: 0, height: 0 },
   },
   stateButtonText: {
     fontSize: 14,
     fontWeight: 'bold',
     color: colors.text.secondary,
+    fontFamily: 'monospace',
   },
   stateButtonTextActive: {
-    color: colors.background.primary,
+    color: colors.text.primary,
   },
   discoverSection: {
     padding: 20,
@@ -335,14 +394,20 @@ const styles = StyleSheet.create({
     backgroundColor: colors.yellow.primary,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: colors.yellow.dark,
+    borderRadius: 4,
+    borderWidth: 3,
+    borderColor: colors.text.primary,
+    shadowColor: '#000',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 0,
   },
   dateText: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: colors.background.primary,
+    color: colors.text.primary,
+    fontFamily: 'monospace',
   },
   typeTag: {
     flexDirection: 'row',
@@ -350,9 +415,11 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 20,
+    borderRadius: 4,
     marginBottom: 12,
     gap: 6,
+    borderWidth: 2,
+    borderColor: colors.text.primary,
   },
   typeIcon: {
     fontSize: 16,
@@ -378,14 +445,17 @@ const styles = StyleSheet.create({
     backgroundColor: colors.success,
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 6,
+    borderRadius: 4,
     alignSelf: 'flex-start',
     marginBottom: 8,
+    borderWidth: 2,
+    borderColor: colors.text.primary,
   },
   verifiedText: {
     fontSize: 11,
     fontWeight: 'bold',
     color: colors.text.primary,
+    fontFamily: 'monospace',
   },
   interestRow: {
     flexDirection: 'row',
