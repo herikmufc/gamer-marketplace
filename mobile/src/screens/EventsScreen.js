@@ -13,6 +13,7 @@ import { colors } from '../theme/colors';
 import RetroButton from '../components/RetroButton';
 import RetroCard from '../components/RetroCard';
 import RetroIcon from '../components/RetroIcon';
+import PageBanner from '../components/PageBanner';
 import { api } from '../api/client';
 
 const ESTADOS_BRASIL = [
@@ -197,16 +198,8 @@ export default function EventsScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      {/* Header Retro */}
-      <View style={styles.header}>
-        <View style={styles.headerContent}>
-          <RetroIcon name="calendar" size={40} />
-          <View>
-            <Text style={styles.headerTitle}>Eventos Retro</Text>
-            <Text style={styles.headerSubtitle}>Feiras, encontros e campeonatos</Text>
-          </View>
-        </View>
-      </View>
+      {/* Page Banner */}
+      <PageBanner source="eventos" />
 
       {/* Seletor de Estado */}
       <View style={styles.stateSelector}>

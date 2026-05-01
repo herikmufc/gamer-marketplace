@@ -12,6 +12,7 @@ import axios from '../api/client';
 import { colors } from '../theme/colors';
 import RetroCard from '../components/RetroCard';
 import RetroIcon from '../components/RetroIcon';
+import PageBanner from '../components/PageBanner';
 
 export default function ForumScreen({ navigation }) {
   const [posts, setPosts] = useState([]);
@@ -94,13 +95,8 @@ export default function ForumScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>🎮 FÓRUM GAMER</Text>
-        <Text style={styles.headerSubtitle}>
-          Discussões, dúvidas e dicas
-        </Text>
-      </View>
+      {/* Page Banner */}
+      <PageBanner source="forum" />
 
       {/* Categories */}
       <View style={styles.categories}>

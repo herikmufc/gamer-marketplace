@@ -11,6 +11,7 @@ import {
 import axios from '../api/client';
 import { colors } from '../theme/colors';
 import RetroCard from '../components/RetroCard';
+import PageBanner from '../components/PageBanner';
 
 export default function ChatListScreen({ navigation }) {
   const [rooms, setRooms] = useState([]);
@@ -77,13 +78,8 @@ export default function ChatListScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>💬 CONVERSAS</Text>
-        <Text style={styles.headerSubtitle}>
-          🛡️ Protegido por IA anti-fraude
-        </Text>
-      </View>
+      {/* Page Banner */}
+      <PageBanner source="chat" />
 
       {/* List */}
       <FlatList

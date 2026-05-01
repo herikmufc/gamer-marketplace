@@ -15,6 +15,7 @@ import { colors } from '../theme/colors';
 import RetroButton from '../components/RetroButton';
 import RetroCard from '../components/RetroCard';
 import RetroIcon from '../components/RetroIcon';
+import PageBanner from '../components/PageBanner';
 import { useFocusEffect } from '@react-navigation/native';
 
 export default function ProfileScreen({ navigation }) {
@@ -124,8 +125,11 @@ export default function ProfileScreen({ navigation }) {
 
   return (
     <ScrollView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
+      {/* Page Banner */}
+      <PageBanner source="perfil" />
+
+      {/* User Info */}
+      <View style={styles.userInfo}>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>
             {user?.username[0].toUpperCase()}
@@ -289,10 +293,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background.primary,
   },
-  header: {
+  userInfo: {
     alignItems: 'center',
     padding: 40,
-    paddingTop: 80,
+    paddingTop: 20,
     backgroundColor: colors.background.secondary,
     borderBottomWidth: 3,
     borderBottomColor: colors.yellow.primary,

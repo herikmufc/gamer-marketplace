@@ -17,6 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../theme/colors';
 import { api, maintenance } from '../api/client';
 import RetroIcon from '../components/RetroIcon';
+import PageBanner from '../components/PageBanner';
 
 export default function MaintenanceScreen() {
   const [messages, setMessages] = useState([]);
@@ -194,10 +195,8 @@ export default function MaintenanceScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>🛠️ Manutenção</Text>
-        <Text style={styles.headerSubtitle}>Assistente de Reparo</Text>
-      </View>
+      {/* Page Banner */}
+      <PageBanner source="manutencao" />
 
       <KeyboardAvoidingView
         style={styles.content}

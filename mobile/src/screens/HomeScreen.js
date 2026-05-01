@@ -15,6 +15,7 @@ import { products } from '../api/client';
 import { colors } from '../theme/colors';
 import RetroCard from '../components/RetroCard';
 import RetroIcon from '../components/RetroIcon';
+import PageBanner from '../components/PageBanner';
 
 export default function HomeScreen({ navigation }) {
   const [productList, setProductList] = useState([]);
@@ -144,18 +145,8 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      {/* Header with Brand Banner */}
-      <View style={styles.header}>
-        <Image
-          source={require('../../assets/brand/banner.png')}
-          style={styles.bannerImage}
-          resizeMode="cover"
-        />
-        <View style={styles.taglineContainer}>
-          <RetroIcon name="gamepad" size={20} />
-          <Text style={styles.brandTagline}>Games Clássicos, Preços Modernos</Text>
-        </View>
-      </View>
+      {/* Page Banner */}
+      <PageBanner source="inicio" />
 
       {/* Search */}
       <View style={styles.searchContainer}>
