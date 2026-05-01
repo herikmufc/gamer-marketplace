@@ -9,13 +9,13 @@ const { width } = Dimensions.get('window');
  */
 export default function PageBanner({ source }) {
   const banners = {
-    inicio: require('../../assets/banners/inicio.png'),
-    eventos: require('../../assets/banners/eventos.png'),
-    forum: require('../../assets/banners/forum.png'),
-    cheats: require('../../assets/banners/cheats.png'),
-    manutencao: require('../../assets/banners/manutencao.png'),
-    chat: require('../../assets/banners/chat.png'),
-    perfil: require('../../assets/banners/perfil.png'),
+    inicio: require('../../assets/banners/inicio_v2.png'),
+    eventos: require('../../assets/banners/eventos_v2.png'),
+    forum: require('../../assets/banners/forum_v2.png'),
+    cheats: require('../../assets/banners/cheats_v2.png'),
+    manutencao: require('../../assets/banners/manutencao_v2.png'),
+    chat: require('../../assets/banners/chat_v2.png'),
+    perfil: require('../../assets/banners/perfil_v2.png'),
   };
 
   const bannerSource = banners[source];
