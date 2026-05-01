@@ -14,7 +14,7 @@ export default function PageBanner({ source }) {
     inicio: require('../../assets/banners/banner_inicio.png'),
     eventos: require('../../assets/banners/banner_eventos.png'),
     forum: require('../../assets/banners/banner_forum.png'),
-    cheats: require('../../assets/banners/banner_cheats.png'),
+    cheats: require('../../assets/banners/banner_cheats_v2.png'),
     manutencao: require('../../assets/banners/banner_manutencao.png'),
     chat: require('../../assets/banners/banner_chat.png'),
     perfil: require('../../assets/banners/banner_perfil.png'),
