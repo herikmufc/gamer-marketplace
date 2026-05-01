@@ -9,7 +9,7 @@
     "newArchEnabled": false,
     "scheme": "retrotrade",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#0a0a0f"
     },

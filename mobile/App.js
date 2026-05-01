@@ -5,7 +5,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import { ActivityIndicator, View, Text, StyleSheet, Linking, Alert, Image } from 'react-native';
-import AnimatedSplashScreen from './src/screens/AnimatedSplashScreen';
+import IntroScreen from './src/screens/IntroScreen';
 
 // Screens
 import LegalTermsScreen from './src/screens/LegalTermsScreen';
@@ -224,13 +224,13 @@ function RootNavigator() {
 
 // Main App Component
 export default function App() {
-  const [showSplash, setShowSplash] = useState(true);
+  const [showIntro, setShowIntro] = useState(true);
 
-  if (showSplash) {
+  if (showIntro) {
     return (
       <>
         <StatusBar style="light" />
-        <AnimatedSplashScreen onFinish={() => setShowSplash(false)} />
+        <IntroScreen onFinish={() => setShowIntro(false)} />
       </>
     );
   }
